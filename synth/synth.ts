@@ -1799,6 +1799,7 @@ export class Song {
 	public loopLength: number;
 	public pitchChannelCount: number;
 	public noiseChannelCount: number;
+	public audioTrack: {name: string, mimeType: string, dataUrl: string, startBeat: number, gain: number} | null = null;
 	public readonly channels: Channel[] = [];
 	
 	constructor(string?: string) {
@@ -1884,6 +1885,7 @@ export class Song {
 	}
 	
 	public toBase64String(): string {
+		if (this.audioTrack != null) return JSON.stringify(this.toJsonObject());
 		let bits: BitFieldWriter;
 		let buffer: number[] = [];
 		
@@ -3297,12 +3299,24 @@ export class Song {
 			"layeredInstruments": this.layeredInstruments,
 			"patternInstruments": this.patternInstruments,
 			"channels": channelArray,
+			...(this.audioTrack == null ? {} : {"audioTrack": this.audioTrack}),
 		};
 	}
 	
 	public fromJsonObject(jsonObject: any): void {
 		this.initToDefault(true);
+		this.audioTrack = null;
 		if (!jsonObject) return;
+		if (jsonObject["audioTrack"] != undefined && typeof jsonObject["audioTrack"].dataUrl == "string") {
+			const audioTrack = jsonObject["audioTrack"];
+			this.audioTrack = {
+				name: typeof audioTrack.name == "string" ? audioTrack.name : "Audio reference",
+				mimeType: typeof audioTrack.mimeType == "string" ? audioTrack.mimeType : "audio/wav",
+				dataUrl: audioTrack.dataUrl,
+				startBeat: Math.max(0, Number(audioTrack.startBeat) || 0),
+				gain: Math.max(0, Math.min(1, Number(audioTrack.gain) || 1)),
+			};
+		}
 		
 		//const version: number = jsonObject["version"] | 0;
 		//if (version > Song._latestVersion) return; // Go ahead and try to parse something from the future I guess? JSON is pretty easy-going!

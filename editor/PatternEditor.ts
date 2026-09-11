@@ -1121,7 +1121,9 @@ export class PatternEditor {
 				for (let i: number = 0; i < note.pitches.length; i++) {
 					const pitch: number = note.pitches[i];
 					let notePath: SVGPathElement = SVG.path();
-					notePath.setAttribute("fill", ColorConfig.getChannelColor(this._doc.song, this._doc.channel).secondaryNote);
+					notePath.setAttribute("fill", "none");
+					notePath.setAttribute("stroke", ColorConfig.getChannelColor(this._doc.song, this._doc.channel).secondaryNote);
+					notePath.setAttribute("stroke-width", "1");
 					notePath.setAttribute("pointer-events", "none");
 					this._drawNote(notePath, pitch, note.start, note.pins, this._pitchHeight / 2 + 1, false, this._octaveOffset);
 					this._svgNoteContainer.appendChild(notePath);

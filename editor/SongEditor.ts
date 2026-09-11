@@ -35,6 +35,7 @@ import {ExportPrompt} from "./ExportPrompt.js";
 import {ImportPrompt} from "./ImportPrompt.js";
 import {SongRecoveryPrompt} from "./SongRecoveryPrompt.js";
 import {RecordingSetupPrompt} from "./RecordingSetupPrompt.js";
+import {AudioPrompt} from "./AudioPrompt.js";
 import {Change} from "./Change.js";
 import {ChangeTempo, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeCustomizeInstrument, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument} from "./changes.js";
 
@@ -199,6 +200,7 @@ export class SongEditor {
 		option({selected: true, disabled: true, hidden: hideSelectMenuTitlesInOptions}, "File"),
 		option({value: "new"}, "+ New Blank Song"),
 		option({value: "import"}, "↑ Import Song... (" + ctrlSymbol + "O)"),
+		option({value: "audio"}, "♫ Load / Record Audio Reference..."),
 		option({value: "export"}, "↓ Export Song... (" + ctrlSymbol + "S)"),
 		option({value: "copyUrl"}, "⎘ Copy Song URL"),
 		option({value: "shareUrl"}, "⤳ Share Song URL"),
@@ -737,6 +739,9 @@ export class SongEditor {
 					break;
 				case "import":
 					this.prompt = new ImportPrompt(this.doc);
+					break;
+				case "audio":
+					this.prompt = new AudioPrompt(this.doc);
 					break;
 				case "songRecovery":
 					this.prompt = new SongRecoveryPrompt(this.doc);

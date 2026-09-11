@@ -171,6 +171,8 @@ let zoomEnabled: boolean = false;
 let timelineWidth: number = 1;
 
 const synth: Synth = new Synth();
+const audioTrack: HTMLAudioElement = document.createElement("audio");
+audioTrack.preload = "auto";
 const isMobile: boolean = matchMedia("(pointer:coarse)").matches;
 synth.anticipatePoorPerformance = isMobile;
 
@@ -249,11 +251,30 @@ function getLocalStorage(key: string): string | null {
 function loadSong(songString: string, reuseParams: boolean): void {
 	synth.setSong(songString);
 	synth.snapToStart();
+	syncAudioTrack();
 	const updatedSongString: string = synth.song!.toBase64String();
 	editLink.href = "../#" + updatedSongString;
 	const hashQueryParams = new URLSearchParams(reuseParams ? location.hash.slice(1) : "");
 	hashQueryParams.set("song", updatedSongString);
 	location.hash = hashQueryParams.toString();
+}
+
+function syncAudioTrack(): void {
+	if (synth.song?.audioTrack == null) {
+		audioTrack.pause();
+		audioTrack.removeAttribute("src");
+		return;
+	}
+	audioTrack.src = synth.song.audioTrack.dataUrl;
+	audioTrack.volume = synth.song.audioTrack.gain;
+	audioTrack.load();
+}
+
+function syncAudioPosition(): void {
+	if (synth.song?.audioTrack == null) return;
+	const track = synth.song.audioTrack;
+	const seconds = Math.max(0, (synth.playhead * synth.song.beatsPerBar - track.startBeat) * 60 / synth.song.tempo);
+	if (Math.abs(audioTrack.currentTime - seconds) > 0.18) audioTrack.currentTime = seconds;
 }
 
 function hashUpdatedExternally(): void {
@@ -330,8 +351,11 @@ function onTogglePlay(): void {
 		animationRequest = null;
 		if (synth.playing) {
 			synth.pause();
+			audioTrack.pause();
 		} else {
+			syncAudioPosition();
 			synth.play();
+			if (synth.song.audioTrack != null) void audioTrack.play();
 			setLocalStorage("playerId", id);
 			animate();
 			clearInterval(pauseIfAnotherPlayerStartsHandle!);
@@ -400,6 +424,7 @@ function setSynthVolume(): void {
 
 function renderPlayhead(): void {
 	if (synth.song != null) {
+		syncAudioPosition();
 		let pos: number = synth.playhead / synth.song.barCount;
 		playhead.style.left = (timelineWidth * pos) + "px";
 		

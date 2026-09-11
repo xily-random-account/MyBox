@@ -1,11 +1,14 @@
 
-const cacheName = "MyBox";
+const cacheName = "MyBox-v2";
 
 self.addEventListener("install", function(event) {
 	event.waitUntil(
 		caches.open(cacheName).then(function(cache) {
 			return cache.addAll([
 				"/",
+				"/index.html",
+				"/style.css",
+				"/service_worker.js",
 				"/mybox_editor.min.js",
 				"/player/",
 				"/player/mybox_player.min.js",
