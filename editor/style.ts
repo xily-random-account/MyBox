@@ -1373,4 +1373,181 @@ document.head.appendChild(HTML.style({type: "text/css"}, `
 	}
 }
 
+	/* Studio console visual refresh. Keep the editor dense, but give each working area a clear surface. */
+	.myboxEditor {
+		--studio-surface: color-mix(in srgb, ${ColorConfig.editorBackground} 92%, ${ColorConfig.primaryText});
+		--studio-surface-raised: color-mix(in srgb, ${ColorConfig.editorBackground} 84%, ${ColorConfig.primaryText});
+		--studio-line: color-mix(in srgb, ${ColorConfig.uiWidgetFocus} 72%, transparent);
+		--studio-muted: color-mix(in srgb, ${ColorConfig.secondaryText} 16%, transparent);
+		font-family: "Avenir Next", "Segoe UI", sans-serif;
+		letter-spacing: 0;
+		background:
+			radial-gradient(circle at 12% 0%, color-mix(in srgb, ${ColorConfig.linkAccent} 10%, transparent), transparent 28%),
+			linear-gradient(135deg, color-mix(in srgb, ${ColorConfig.editorBackground} 92%, #000), ${ColorConfig.editorBackground});
+		gap: 10px;
+		padding: 10px;
+		box-sizing: border-box;
+	}
+
+	.myboxEditor .pattern-area,
+	.myboxEditor .track-area,
+	.myboxEditor .settings-area {
+		background: color-mix(in srgb, ${ColorConfig.editorBackground} 88%, ${ColorConfig.primaryText});
+		border: 1px solid var(--studio-line);
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+	}
+
+	.myboxEditor .pattern-area {
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.myboxEditor .track-area {
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.myboxEditor .settings-area {
+		border-radius: 8px;
+		padding: 10px;
+		box-sizing: border-box;
+		overflow: auto;
+	}
+
+	.myboxEditor .version-area {
+		padding: 4px 8px 10px;
+		border-bottom: 1px solid var(--studio-line);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.myboxEditor .menu-area,
+	.myboxEditor .song-settings-area,
+	.myboxEditor .instrument-settings-area {
+		background: var(--studio-muted);
+		border: 1px solid var(--studio-line);
+		border-radius: 6px;
+		padding: 7px;
+	}
+
+	.myboxEditor .menu-area,
+	.myboxEditor .song-settings-area {
+		margin-top: 8px;
+	}
+
+	.myboxEditor .instrument-settings-area {
+		margin-top: 8px;
+	}
+
+	.myboxEditor .menu-area > *,
+	.myboxEditor .selectRow,
+	.myboxEditor .instrumentCopyPasteRow {
+		margin: 4px 0;
+	}
+
+	.myboxEditor .menu select,
+	.myboxEditor .selectContainer select,
+	.myboxEditor input[type=text],
+	.myboxEditor input[type=number] {
+		border: 1px solid var(--studio-line);
+		border-radius: 4px;
+		background: var(--studio-surface);
+		color: ${ColorConfig.primaryText};
+		min-height: 28px;
+		box-sizing: border-box;
+	}
+
+	.myboxEditor button {
+		border: 1px solid var(--studio-line);
+		border-radius: 5px;
+		background: var(--studio-surface-raised);
+		color: ${ColorConfig.primaryText};
+		font-family: inherit;
+		font-weight: 600;
+		transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+	}
+
+	.myboxEditor button:hover {
+		background: color-mix(in srgb, ${ColorConfig.linkAccent} 18%, ${ColorConfig.uiWidgetBackground});
+		border-color: ${ColorConfig.linkAccent};
+	}
+
+	.myboxEditor button:active {
+		transform: translateY(1px);
+	}
+
+	.myboxEditor button:focus-visible,
+	.myboxEditor select:focus-visible,
+	.myboxEditor input:focus-visible {
+		outline: 2px solid ${ColorConfig.linkAccent};
+		outline-offset: 2px;
+	}
+
+	.myboxEditor .play-pause-area {
+		margin: 8px 0 2px;
+		padding: 8px;
+		background: linear-gradient(135deg, color-mix(in srgb, ${ColorConfig.linkAccent} 14%, transparent), transparent);
+		border: 1px solid var(--studio-line);
+		border-radius: 6px;
+	}
+
+	.myboxEditor .playback-bar-controls {
+		gap: 4px;
+		align-items: center;
+	}
+
+	.myboxEditor button.playButton,
+	.myboxEditor button.pauseButton,
+	.myboxEditor button.recordButton {
+		background: ${ColorConfig.linkAccent};
+		color: ${ColorConfig.invertedText};
+		border-color: ${ColorConfig.linkAccent};
+	}
+
+	.myboxEditor .trackContainer {
+		background: color-mix(in srgb, ${ColorConfig.editorBackground} 90%, ${ColorConfig.primaryText});
+	}
+
+	.myboxEditor .audioTrackEditor {
+		border-top: 1px solid var(--studio-line);
+		background: linear-gradient(180deg, color-mix(in srgb, ${ColorConfig.linkAccent} 8%, transparent), transparent);
+	}
+
+	.myboxEditor .audioTrackEditor::before {
+		content: "AUDIO TRACKS";
+		display: block;
+		padding: 2px 8px 4px;
+		color: ${ColorConfig.secondaryText};
+		font-size: 10px;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+	}
+
+	.myboxEditor .audioTrackEditor button {
+		margin-left: 8px;
+	}
+
+	.myboxEditor .audioTrackEditor.audioDropTarget {
+		background: color-mix(in srgb, ${ColorConfig.linkAccent} 15%, transparent);
+		outline: 2px dashed ${ColorConfig.linkAccent};
+		outline-offset: -3px;
+	}
+
+	.myboxEditor .audioClip:hover {
+		filter: brightness(1.08);
+		box-shadow: 0 0 0 2px color-mix(in srgb, ${ColorConfig.primaryText} 45%, transparent);
+	}
+
+	.myboxEditor .promptContainer {
+		backdrop-filter: blur(8px);
+	}
+
+	.myboxEditor .promptContainer > .prompt {
+		border: 1px solid var(--studio-line);
+		border-radius: 8px;
+		box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+		background: ${ColorConfig.editorBackground};
+	}
+
 `));
