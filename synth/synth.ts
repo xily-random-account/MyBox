@@ -1781,6 +1781,20 @@ export class Channel {
 	public muted: boolean = false;
 }
 
+export interface AudioTrack {
+	name: string;
+	mimeType: string;
+	dataUrl: string;
+	startBeat: number;
+	gain: number;
+	pan: number;
+	fadeIn: number;
+	fadeOut: number;
+	muted: boolean;
+	lowpass: number;
+	highpass: number;
+}
+
 export class Song {
 	private static readonly _format: string = "MyBox";
 	private static readonly _oldestVersion: number = 2;
@@ -1799,7 +1813,13 @@ export class Song {
 	public loopLength: number;
 	public pitchChannelCount: number;
 	public noiseChannelCount: number;
-	public audioTrack: {name: string, mimeType: string, dataUrl: string, startBeat: number, gain: number} | null = null;
+	public audioTracks: AudioTrack[] = [];
+	public get audioTrack(): AudioTrack | null {
+		return this.audioTracks[0] || null;
+	}
+	public set audioTrack(track: AudioTrack | null) {
+		this.audioTracks = track == null ? [] : [track];
+	}
 	public readonly channels: Channel[] = [];
 	
 	constructor(string?: string) {
@@ -1885,7 +1905,7 @@ export class Song {
 	}
 	
 	public toBase64String(): string {
-		if (this.audioTrack != null) return JSON.stringify(this.toJsonObject());
+		if (this.audioTracks.length > 0) return JSON.stringify(this.toJsonObject());
 		let bits: BitFieldWriter;
 		let buffer: number[] = [];
 		
@@ -3299,23 +3319,32 @@ export class Song {
 			"layeredInstruments": this.layeredInstruments,
 			"patternInstruments": this.patternInstruments,
 			"channels": channelArray,
-			...(this.audioTrack == null ? {} : {"audioTrack": this.audioTrack}),
+			...(this.audioTracks.length == 0 ? {} : {"audioTracks": this.audioTracks}),
 		};
 	}
 	
 	public fromJsonObject(jsonObject: any): void {
 		this.initToDefault(true);
-		this.audioTrack = null;
+		this.audioTracks = [];
 		if (!jsonObject) return;
-		if (jsonObject["audioTrack"] != undefined && typeof jsonObject["audioTrack"].dataUrl == "string") {
-			const audioTrack = jsonObject["audioTrack"];
-			this.audioTrack = {
-				name: typeof audioTrack.name == "string" ? audioTrack.name : "Audio reference",
+		const audioTracks: any[] = Array.isArray(jsonObject["audioTracks"])
+			? jsonObject["audioTracks"]
+			: (jsonObject["audioTrack"] == undefined ? [] : [jsonObject["audioTrack"]]);
+		for (const audioTrack of audioTracks) {
+			if (typeof audioTrack?.dataUrl != "string") continue;
+			this.audioTracks.push({
+				name: typeof audioTrack.name == "string" ? audioTrack.name : "Audio track",
 				mimeType: typeof audioTrack.mimeType == "string" ? audioTrack.mimeType : "audio/wav",
 				dataUrl: audioTrack.dataUrl,
 				startBeat: Math.max(0, Number(audioTrack.startBeat) || 0),
-				gain: Math.max(0, Math.min(1, Number(audioTrack.gain) || 1)),
-			};
+				gain: Math.max(0, Math.min(1, Number.isFinite(Number(audioTrack.gain)) ? Number(audioTrack.gain) : 1)),
+				pan: Math.max(-1, Math.min(1, Number(audioTrack.pan) || 0)),
+				fadeIn: Math.max(0, Number(audioTrack.fadeIn) || 0),
+				fadeOut: Math.max(0, Number(audioTrack.fadeOut) || 0),
+				muted: audioTrack.muted === true,
+				lowpass: Math.max(0, Math.min(22050, Number(audioTrack.lowpass) || 0)),
+				highpass: Math.max(0, Math.min(22050, Number(audioTrack.highpass) || 0)),
+			});
 		}
 		
 		//const version: number = jsonObject["version"] | 0;

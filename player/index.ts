@@ -171,8 +171,14 @@ let zoomEnabled: boolean = false;
 let timelineWidth: number = 1;
 
 const synth: Synth = new Synth();
-const audioTrack: HTMLAudioElement = document.createElement("audio");
-audioTrack.preload = "auto";
+interface AudioTrackPlayback {
+	element: HTMLAudioElement;
+	gain: GainNode | null;
+	pan: StereoPannerNode | null;
+	lowpass: BiquadFilterNode | null;
+	highpass: BiquadFilterNode | null;
+}
+const audioTracks: AudioTrackPlayback[] = [];
 const isMobile: boolean = matchMedia("(pointer:coarse)").matches;
 synth.anticipatePoorPerformance = isMobile;
 
@@ -260,21 +266,50 @@ function loadSong(songString: string, reuseParams: boolean): void {
 }
 
 function syncAudioTrack(): void {
-	if (synth.song?.audioTrack == null) {
-		audioTrack.pause();
-		audioTrack.removeAttribute("src");
-		return;
+	for (const playback of audioTracks) {
+		playback.element.pause();
+		playback.element.removeAttribute("src");
 	}
-	audioTrack.src = synth.song.audioTrack.dataUrl;
-	audioTrack.volume = synth.song.audioTrack.gain;
-	audioTrack.load();
+	audioTracks.length = 0;
+	if (synth.song == null) return;
+	for (const track of synth.song.audioTracks) {
+		const element: HTMLAudioElement = document.createElement("audio");
+		element.preload = "auto";
+		element.src = track.dataUrl;
+		element.load();
+		const playback: AudioTrackPlayback = {element, gain: null, pan: null, lowpass: null, highpass: null};
+		if (typeof AudioContext != "undefined") {
+			const context = new AudioContext();
+			const source = context.createMediaElementSource(element);
+			playback.gain = context.createGain();
+			playback.pan = context.createStereoPanner();
+			playback.lowpass = context.createBiquadFilter();
+			playback.highpass = context.createBiquadFilter();
+			source.connect(playback.highpass).connect(playback.lowpass).connect(playback.gain).connect(playback.pan).connect(context.destination);
+		}
+		audioTracks.push(playback);
+	}
 }
 
 function syncAudioPosition(): void {
-	if (synth.song?.audioTrack == null) return;
-	const track = synth.song.audioTrack;
-	const seconds = Math.max(0, (synth.playhead * synth.song.beatsPerBar - track.startBeat) * 60 / synth.song.tempo);
-	if (Math.abs(audioTrack.currentTime - seconds) > 0.18) audioTrack.currentTime = seconds;
+	if (synth.song == null) return;
+	const songBeat = synth.playhead * synth.song.beatsPerBar;
+	for (let i: number = 0; i < synth.song.audioTracks.length; i++) {
+		const track = synth.song.audioTracks[i];
+		const playback = audioTracks[i];
+		if (playback == undefined) continue;
+		const seconds = Math.max(0, (songBeat - track.startBeat) * 60 / synth.song.tempo);
+		if (songBeat < track.startBeat || track.muted) playback.element.pause();
+		if (Math.abs(playback.element.currentTime - seconds) > 0.18) playback.element.currentTime = seconds;
+		const fadeIn = track.fadeIn <= 0 ? 1 : Math.min(1, Math.max(0, (songBeat - track.startBeat) / track.fadeIn));
+		const fadeOut = track.fadeOut <= 0 || !isFinite(playback.element.duration) ? 1 : Math.min(1, Math.max(0, (playback.element.duration * synth.song.tempo / 60 - seconds) / track.fadeOut));
+		const volume = track.muted || songBeat < track.startBeat ? 0 : track.gain * fadeIn * fadeOut;
+		if (playback.gain != null) playback.gain.gain.value = volume;
+		else playback.element.volume = volume;
+		if (playback.pan != null) playback.pan.pan.value = track.pan;
+		if (playback.lowpass != null) playback.lowpass.frequency.value = track.lowpass > 0 ? track.lowpass : 22050;
+		if (playback.highpass != null) playback.highpass.frequency.value = track.highpass > 0 ? track.highpass : 0;
+	}
 }
 
 function hashUpdatedExternally(): void {
@@ -351,11 +386,15 @@ function onTogglePlay(): void {
 		animationRequest = null;
 		if (synth.playing) {
 			synth.pause();
-			audioTrack.pause();
+			for (const playback of audioTracks) playback.element.pause();
 		} else {
 			syncAudioPosition();
 			synth.play();
-			if (synth.song.audioTrack != null) void audioTrack.play();
+			for (const playback of audioTracks) {
+				const context: any = playback.gain?.context;
+				if (context != null && context.resume != undefined) void context.resume();
+				if (playback.element.volume > 0 || playback.gain != null) void playback.element.play();
+			}
 			setLocalStorage("playerId", id);
 			animate();
 			clearInterval(pauseIfAnotherPlayerStartsHandle!);

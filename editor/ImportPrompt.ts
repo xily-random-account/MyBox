@@ -77,7 +77,10 @@ export class ImportPrompt implements Prompt {
 			const reader: FileReader = new FileReader();
 			reader.addEventListener("load", (): void => {
 				const songObject: any = this._doc.song.toJsonObject();
-				songObject.audioTrack = {name: file.name, mimeType: file.type || "audio/wav", dataUrl: reader.result, startBeat: 0, gain: 1};
+				const audioTracks: any[] = Array.isArray(songObject.audioTracks) ? songObject.audioTracks : [];
+				audioTracks.push({name: file.name, mimeType: file.type || "audio/wav", dataUrl: reader.result, startBeat: 0, gain: 1, pan: 0, fadeIn: 0, fadeOut: 0, muted: false, lowpass: 0, highpass: 0});
+				songObject.audioTracks = audioTracks;
+				delete songObject.audioTrack;
 				this._doc.prompt = null;
 				this._doc.goBackToStart();
 				this._doc.record(new ChangeSong(this._doc, JSON.stringify(songObject)), true, true);
