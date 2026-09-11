@@ -1,5 +1,6 @@
 {
 	"name": "mybox",
+	"main": "server.js",
 	"license": "MIT",
 	"type": "module",
 	"private": true,
