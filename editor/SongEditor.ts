@@ -17,6 +17,7 @@ import {FadeInOutEditor} from "./FadeInOutEditor.js";
 import {FilterEditor} from "./FilterEditor.js";
 import {MuteEditor} from "./MuteEditor.js";
 import {TrackEditor} from "./TrackEditor.js";
+import {AudioTrackEditor} from "./AudioTrackEditor.js";
 import {ChannelRow} from "./ChannelRow.js";
 import {LayoutPrompt} from "./LayoutPrompt.js";
 import {LoopEditor} from "./LoopEditor.js";
@@ -186,6 +187,7 @@ export class SongEditor {
 	private readonly _patternEditorNext: PatternEditor = new PatternEditor(this.doc, false, 1);
 	private readonly _muteEditor: MuteEditor = new MuteEditor(this.doc);
 	private readonly _trackEditor: TrackEditor = new TrackEditor(this.doc);
+	private readonly _audioTrackEditor: AudioTrackEditor = new AudioTrackEditor(this.doc, () => this._openPrompt("audio"));
 	private readonly _loopEditor: LoopEditor = new LoopEditor(this.doc);
 	private readonly _octaveScrollBar: OctaveScrollBar = new OctaveScrollBar(this.doc);
 	private readonly _piano: Piano = new Piano(this.doc);
@@ -411,6 +413,7 @@ export class SongEditor {
 	private readonly _trackContainer: HTMLDivElement = div({class: "trackContainer noSelection"},
 		this._trackEditor.container,
 		this._loopEditor.container,
+		this._audioTrackEditor.container,
 	);
 	private readonly _trackVisibleArea: HTMLDivElement = div({style: "position: absolute; width: 100%; height: 100%; pointer-events: none;"});
 	private readonly _trackAndMuteContainer: HTMLDivElement = div({class: "trackAndMuteContainer prefers-big-scrollbars"},
@@ -803,6 +806,7 @@ export class SongEditor {
 		this._barScrollBar.render();
 		this._muteEditor.render();
 		this._trackEditor.render();
+		this._audioTrackEditor.render();
 		
 		this._trackAndMuteContainer.scrollLeft = this.doc.barScrollPos * this.doc.getBarWidth();
 		this._trackAndMuteContainer.scrollTop = this.doc.channelScrollPos * ChannelRow.patternHeight;
