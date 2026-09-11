@@ -1,0 +1,17 @@
+.dropbox
+.DS_Store
+.gcloudignore
+/build
+/bundle
+/dist/esm
+/dist/global
+/dist/LICENSE.md
+/dist/synth
+/node_modules
+/website/mybox*.js
+/website/mybox*.js.map
+/website/player/mybox*.js
+/website/player/mybox*.js.map
+/website/competition/**/mybox*.js
+/website/competition/**/mybox*.js.map
+/website/mybox_offline.html

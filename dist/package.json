@@ -1,0 +1,38 @@
+{
+	"name": "mybox",
+	"version": "4.2.1",
+	"author": "John Nesky",
+	"homepage": "https://www.mybox.co",
+	"description": "MyBox is an online tool for sketching and sharing instrumental music.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/johnnesky/mybox.git"
+	},
+	"bugs": {
+		"url": "https://github.com/johnnesky/mybox/issues"
+	},
+	"funding": "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=QZJTX9GRYEV9N&currency_code=USD",
+	"type": "module",
+	"main": "esm/synth/index.js",
+	"module": "esm/synth/index.js",
+	"browser": "esm/synth/index.js",
+	"types": "esm/synth/index.d.ts",
+	"keywords": [
+		"mybox",
+		"music",
+		"composition",
+		"tool",
+		"synth",
+		"synthesizer",
+		"daw",
+		"tracker",
+		"instrument",
+		"song",
+		"melody",
+		"chiptune",
+		"free",
+		"javascript",
+		"browser"
+	]
+}
