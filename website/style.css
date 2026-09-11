@@ -1,0 +1,153 @@
+:root {
+	--page-margin: #090b0f;
+	--editor-background: #12161c;
+	--primary-text: #e6ebf2;
+	--secondary-text: #9ca8b8;
+	--link-accent: #f0a85c;
+	--panel-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--page-margin, black);
+	color: var(--primary-text, white);
+	font-family: "Roboto", sans-serif;
+	font-size: 16px;
+	line-height: 1.4;
+	overflow-x: hidden;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	margin: 0;
+	overflow-x: hidden;
+	overflow-y: hidden;
+	width: 100%;
+}
+
+#myboxEditorContainer {
+	background: var(--editor-background, black);
+	height: 100vh;
+	max-width: none;
+	padding: 10px;
+	width: 100%;
+}
+
+#text-content {
+	display: none;
+}
+
+h1,
+h2 {
+	font-weight: 500;
+	line-height: 1.2;
+	text-align: center;
+	-webkit-text-stroke-width: 0;
+}
+
+h1 {
+	font-size: 1.9rem;
+	letter-spacing: 0.02em;
+	margin: 1.25rem 0 0.75rem;
+}
+
+h2 {
+	font-size: 1.45rem;
+	margin: 1.75rem 0 0.75rem;
+}
+
+p,
+.donation {
+	color: var(--secondary-text, #b8b8b8);
+	margin: 1rem 0;
+}
+
+a {
+	color: var(--link-accent, #98f);
+	text-underline-offset: 0.15em;
+	transition: color 120ms ease;
+}
+
+a:hover,
+a:focus-visible {
+	color: #ddd5ff;
+}
+
+a:focus-visible,
+input[type="submit"]:focus-visible {
+	border-radius: 3px;
+	outline: 2px solid currentColor;
+	outline-offset: 3px;
+}
+
+.donation form {
+	display: inline;
+}
+
+.donation input[type="submit"] {
+	appearance: none;
+	background: transparent;
+	border: 0;
+	color: var(--link-accent, #98f);
+	cursor: pointer;
+	font: inherit;
+	padding: 0;
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
+}
+
+.donation input[type="submit"]:hover {
+	color: #ddd5ff;
+}
+
+.column-container {
+	width: 100%;
+}
+
+.instructions-column {
+	min-width: 0;
+}
+
+#keyboard-instructions {
+	background: rgba(255, 255, 255, 0.035);
+	border-left: 3px solid var(--link-accent, #98f);
+	margin: 1.25rem 0;
+	padding: 0.1rem 1rem;
+}
+
+#keyboard-instructions p {
+	margin-bottom: 0.5rem;
+}
+
+ul {
+	padding-left: 1.5rem;
+}
+
+li::marker {
+	color: var(--link-accent, #98f);
+}
+
+#mobile-instructions {
+	display: none;
+}
+
+@media (max-width: 710px) {
+	html {
+		font-size: 16px;
+	}
+
+	body {
+		overflow-y: auto;
+	}
+
+	#myboxEditorContainer {
+		min-height: 645px;
+		overflow: auto;
+		padding: 0;
+	}
+}

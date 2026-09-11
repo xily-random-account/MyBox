@@ -1127,6 +1127,9 @@ export class PatternEditor {
 					this._svgNoteContainer.appendChild(notePath);
 					notePath = SVG.path();
 					notePath.setAttribute("fill", ColorConfig.getChannelColor(this._doc.song, this._doc.channel).primaryNote);
+					notePath.setAttribute("stroke", ColorConfig.getChannelColor(this._doc.song, this._doc.channel).secondaryNote);
+					notePath.setAttribute("stroke-width", "0.8");
+					notePath.setAttribute("stroke-linejoin", "round");
 					notePath.setAttribute("pointer-events", "none");
 					this._drawNote(notePath, pitch, note.start, note.pins, this._pitchHeight / 2 + 1, true, this._octaveOffset);
 					this._svgNoteContainer.appendChild(notePath);

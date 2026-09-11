@@ -19,107 +19,7 @@
 	<link rel="icon" type="image/png" sizes="32x32" href="/icon_32.png" />
 	<link rel="manifest" href="/manifest.webmanifest" />
 	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" rel="stylesheet" media="none" onload="if (this.media != 'all') this.media='all';" /> <!-- this is a trick to load CSS asynchronously. -->
-	<style type="text/css">
-		html {
-			background: var(--page-margin, black);
-			overflow-x: hidden;
-			font-size: large;
-			font-family: 'Roboto', sans-serif;
-			line-height: 1.3;
-			color: var(--primary-text, white);
-		}
-		body {
-			margin: auto;
-			overflow-x: hidden;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			align-content: center;
-		}
-		#myboxEditorContainer {
-			min-height: 645px;
-			overflow: auto;
-			background: var(--editor-background, black);
-			width: 100%;
-			max-width: 710px;
-			padding-left: 30px;
-			padding-right: 30px;
-		}
-		#text-content {
-			overflow: auto;
-			background: var(--editor-background, black);
-			width: 100%;
-			max-width: 710px;
-			padding-left: 30px;
-			padding-right: 30px;
-		}
-		h1 {
-			font-size: 1.7rem;
-			text-align: center;
-			margin-top: 0.5em;
-			margin-bottom: 0.5em;
-			-webkit-text-stroke-width: 0;
-		}
-		h2 {
-			font-size: 1.5rem;
-			text-align: center;
-			margin-top: 0.5em;
-			margin-bottom: 0.5em;
-			-webkit-text-stroke-width: 0;
-		}
-		a {
-			color: var(--link-accent, #98f);
-		}
-		.donation form {
-			display: inline;
-		}
-		.donation input[type="submit"] {
-			-webkit-appearance: none;
-			appearance: none;
-			background: none;
-			border: none;
-			font-family: inherit;
-			font-size: inherit;
-			color: var(--link-accent, #98f);
-			text-decoration: underline;
-			cursor: pointer;
-			padding: 0;
-			margin: 0;
-		}
-		
-		/* wide screen */
-		@media (min-width: 711px) {
-			html {
-				width: 100%;
-			}
-			body {
-				width: 100%;
-			}
-			.column-container {
-				width: 710px;
-				display: flex;
-				gap: 25px;
-			}
-			.instructions-column {
-				min-width: 0;
-			}
-		}
-		
-		/* narrow screen */
-		@media (max-width: 710px) {
-			body {
-				width: 100%;
-			}
-			p, .donation {
-				margin: 1em 0.5em;
-			}
-			.column-container {
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-			}
-		}
-	</style>
+	<link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
@@ -200,7 +100,7 @@
 						In the note pattern editor, you can click and drag horizontally on a note to adjust its duration.
 						You can also click above or below an existing note to add more notes to be played simultaneously, which is called a chord. 
 					</p>
-					<div id="mobile-instructions" style="display: none;">
+					<div id="mobile-instructions">
 						<p>
 							You can also long-press in the pattern editor to select a time range within a pattern, which you can then drag to move multiple notes at once.<br/>
 						</p>

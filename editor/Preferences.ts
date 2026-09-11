@@ -56,7 +56,7 @@ export class Preferences {
 		this.metronomeCountIn = this._loadBoolean("metronomeCountIn", true);
 		this.metronomeWhileRecording = this._loadBoolean("metronomeWhileRecording", true);
 		this.keyboardLayout = window.localStorage.getItem("keyboardLayout") || "wickiHayden";
-		this.layout = window.localStorage.getItem("layout") || "small";
+		this.layout = window.localStorage.getItem("layout") || "long";
 		this.colorTheme = window.localStorage.getItem("colorTheme") || "dark classic";
 		this.visibleOctaves = ((<any>window.localStorage.getItem("visibleOctaves")) >>> 0) || Preferences.defaultVisibleOctaves;
 		

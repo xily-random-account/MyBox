@@ -13,6 +13,16 @@ document.head.appendChild(HTML.style({type: "text/css"}, `
 		color: ${ColorConfig.primaryText};
 		background: ${ColorConfig.editorBackground};
 	}
+	.playerVisualization {
+		background: linear-gradient(180deg, #10141b 0%, ${ColorConfig.editorBackground} 100%);
+	}
+	.playerTransport {
+		background: #0d1015;
+		border-top: 1px solid ${ColorConfig.uiWidgetFocus};
+		box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.22);
+		gap: 4px;
+		padding: 6px 8px;
+	}
 	h1 {
 		font-weight: bold;
 		font-size: 14px;
@@ -38,11 +48,15 @@ document.head.appendChild(HTML.style({type: "text/css"}, `
 		cursor: pointer;
 		font-size: 14px;
 		font-family: inherit;
+		min-height: 28px;
 	}
 	button:hover, button:focus {
 		background: ${ColorConfig.uiWidgetFocus};
 	}
 	.playButton, .pauseButton {
+		background: ${ColorConfig.loopAccent};
+		color: ${ColorConfig.invertedText};
+		font-weight: bold;
 		padding-left: 24px;
 		padding-right: 6px;
 	}
@@ -194,9 +208,10 @@ const playhead: HTMLDivElement = div({style: `position: absolute; left: 0; top: 
 const timelineContainer: HTMLDivElement = div({style: "display: flex; flex-grow: 1; flex-shrink: 1; position: relative;"}, timeline, playhead);
 const visualizationContainer: HTMLDivElement = div({style: "display: flex; flex-grow: 1; flex-shrink: 1; height: 0; position: relative; align-items: center; overflow: hidden;"}, timelineContainer);
 
+visualizationContainer.classList.add("playerVisualization");
 document.body.appendChild(visualizationContainer);
 document.body.appendChild(
-	div({style: `flex-shrink: 0; height: 20vh; min-height: 22px; max-height: 70px; display: flex; align-items: center;`},
+	div({class: "playerTransport", style: `flex-shrink: 0; height: 68px; display: flex; align-items: center;`},
 		playButtonContainer,
 		loopButton,
 		volumeIcon,

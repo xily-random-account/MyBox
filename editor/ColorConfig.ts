@@ -15,24 +15,24 @@ export class ColorConfig {
 	public static readonly themes: {[name: string]: string} = {
 		"dark classic": `
 			:root {
-				--page-margin: black;
-				--editor-background: black;
-				--hover-preview: white;
-				--playhead: white;
-				--primary-text: white;
-				--secondary-text: #999;
-				--inverted-text: black;
+				--page-margin: #0b0d11;
+				--editor-background: #151922;
+				--hover-preview: #ffd48a;
+				--playhead: #ffc66d;
+				--primary-text: #f4f0e8;
+				--secondary-text: #9aa4b3;
+				--inverted-text: #151922;
 				--text-selection: rgba(119,68,255,0.99);
-				--box-selection-fill: rgba(255,255,255,0.2);
-				--loop-accent: #74f;
-				--link-accent: #98f;
-				--ui-widget-background: #444;
-				--ui-widget-focus: #777;
-				--pitch-background: #444;
-				--tonic: #864;
-				--fifth-note: #468;
-				--white-piano-key: #bbb;
-				--black-piano-key: #444;
+				--box-selection-fill: rgba(255,196,109,0.18);
+				--loop-accent: #f0a04b;
+				--link-accent: #ffb35c;
+				--ui-widget-background: #2b323d;
+				--ui-widget-focus: #46515f;
+				--pitch-background: #202631;
+				--tonic: #3c3027;
+				--fifth-note: #273949;
+				--white-piano-key: #c9c6bd;
+				--black-piano-key: #343a45;
 				--pitch1-secondary-channel: #0099A1;
 				--pitch1-primary-channel:   #25F3FF;
 				--pitch1-secondary-note:    #00BDC7;
