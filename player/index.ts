@@ -5,7 +5,7 @@ import {ColorConfig} from "../editor/ColorConfig.js";
 import {NotePin, Note, Pattern, Instrument, Channel, Synth} from "../synth/synth.js";
 import {HTML, SVG} from "imperative-html/dist/esm/elements-strict.js";
 
-const {a, button, div, h1, input} = HTML;
+const {a, button, div, h1, input, span} = HTML;
 const {svg, circle, rect, path} = SVG;
 
 document.head.appendChild(HTML.style({type: "text/css"}, `
@@ -14,18 +14,108 @@ document.head.appendChild(HTML.style({type: "text/css"}, `
 		background: ${ColorConfig.editorBackground};
 	}
 	.playerVisualization {
-		background: linear-gradient(180deg, #10141b 0%, ${ColorConfig.editorBackground} 100%);
+		background: ${ColorConfig.editorBackground};
+		border: 1px solid ${ColorConfig.uiWidgetFocus};
+		border-radius: 10px;
+		box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
+	}
+	.playerHeader {
+		box-sizing: border-box;
+		width: min(1180px, calc(100vw - 28px));
+		margin: 14px auto 10px;
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		padding: 12px 16px;
+		border: 1px solid ${ColorConfig.uiWidgetFocus};
+		border-radius: 10px;
+		background: ${ColorConfig.editorBackground};
+		box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+	}
+	.playerHeader h1 {
+		font-size: 17px;
+		letter-spacing: 0.02em;
+	}
+	.playerMeta {
+		color: ${ColorConfig.secondaryText};
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+	.playerLinks {
+		display: flex;
+		gap: 10px;
+		margin-left: auto;
+	}
+	.audioTimeline {
+		box-sizing: border-box;
+		width: min(1180px, calc(100vw - 28px));
+		margin: 10px auto;
+		padding: 10px 12px 12px;
+		border: 1px solid ${ColorConfig.uiWidgetFocus};
+		border-radius: 10px;
+		background: ${ColorConfig.editorBackground};
+		overflow: hidden;
+	}
+	.audioTimelineHeader {
+		color: ${ColorConfig.secondaryText};
+		font-size: 11px;
+		font-weight: bold;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		margin-bottom: 8px;
+	}
+	.audioTimelineViewport {
+		overflow: hidden;
+		position: relative;
+	}
+	.audioTimelineList {
+		position: relative;
+		transition: transform 80ms linear;
+	}
+	.audioTimelineLane {
+		position: relative;
+		height: 38px;
+		margin: 4px 0;
+		border-top: 1px solid ${ColorConfig.uiWidgetBackground};
+		border-bottom: 1px solid ${ColorConfig.uiWidgetBackground};
+		background: repeating-linear-gradient(90deg, transparent 0, transparent 63px, ${ColorConfig.uiWidgetBackground} 63px, ${ColorConfig.uiWidgetBackground} 64px);
+	}
+	.audioTimelineClip {
+		position: absolute;
+		top: 4px;
+		height: 30px;
+		box-sizing: border-box;
+		padding: 7px 10px;
+		border-radius: 5px;
+		background: ${ColorConfig.linkAccent};
+		color: ${ColorConfig.invertedText};
+		font-size: 12px;
+		font-weight: bold;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.audioTimelineEmpty {
+		color: ${ColorConfig.secondaryText};
+		font-size: 12px;
+		padding: 8px 0 2px;
 	}
 	.playerTransport {
-		background: #0d1015;
+		box-sizing: border-box;
+		width: min(1180px, calc(100vw - 28px));
+		margin: 0 auto 14px;
+		background: ${ColorConfig.editorBackground};
 		border-top: 1px solid ${ColorConfig.uiWidgetFocus};
-		box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.22);
-		gap: 4px;
-		padding: 6px 8px;
+		border: 1px solid ${ColorConfig.uiWidgetFocus};
+		border-radius: 10px;
+		box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+		gap: 8px;
+		padding: 10px 12px;
 	}
 	h1 {
 		font-weight: bold;
-		font-size: 14px;
+		font-size: 13px;
 		line-height: 22px;
 		text-align: initial;
 		margin: 0;
@@ -179,10 +269,13 @@ interface AudioTrackPlayback {
 	highpass: BiquadFilterNode | null;
 }
 const audioTracks: AudioTrackPlayback[] = [];
+const audioContextConstructor: any = (<any>window).AudioContext || (<any>window).webkitAudioContext;
+const audioContext: any = audioContextConstructor == undefined ? null : new audioContextConstructor();
 const isMobile: boolean = matchMedia("(pointer:coarse)").matches;
 synth.anticipatePoorPerformance = isMobile;
 
 let titleText: HTMLHeadingElement = h1({style: "flex-grow: 1; margin: 0 1px;"}, "");
+let songMeta: HTMLSpanElement = span({class: "playerMeta"}, "Loading song");
 let editLink: HTMLAnchorElement = a({target: "_top", style: "margin: 0 4px;"}, "✎ Edit");
 let copyLink: HTMLAnchorElement = a({href: "javascript:void(0)", style: "margin: 0 4px;"}, "⎘ Copy URL");
 let shareLink: HTMLAnchorElement = a({href: "javascript:void(0)", style: "margin: 0 4px;"}, "⤳ Share");
@@ -215,9 +308,17 @@ const timeline: SVGSVGElement = svg({style: "min-width: 0; min-height: 0; touch-
 const playhead: HTMLDivElement = div({style: `position: absolute; left: 0; top: 0; width: 2px; height: 100%; background: ${ColorConfig.playhead}; pointer-events: none;`});
 const timelineContainer: HTMLDivElement = div({style: "display: flex; flex-grow: 1; flex-shrink: 1; position: relative;"}, timeline, playhead);
 const visualizationContainer: HTMLDivElement = div({style: "display: flex; flex-grow: 1; flex-shrink: 1; height: 0; position: relative; align-items: center; overflow: hidden;"}, timelineContainer);
+const audioTimelineList: HTMLDivElement = div({class: "audioTimelineList"});
+const audioTimelineViewport: HTMLDivElement = div({class: "audioTimelineViewport"}, audioTimelineList);
+const audioTimeline: HTMLDivElement = div({class: "audioTimeline"},
+	div({class: "audioTimelineHeader"}, "Audio tracks"),
+	audioTimelineViewport,
+);
 
 visualizationContainer.classList.add("playerVisualization");
+document.body.appendChild(div({class: "playerHeader"}, titleText, songMeta, div({class: "playerLinks"}, editLink, copyLink, shareLink, fullscreenLink)));
 document.body.appendChild(visualizationContainer);
+document.body.appendChild(audioTimeline);
 document.body.appendChild(
 	div({class: "playerTransport", style: `flex-shrink: 0; height: 68px; display: flex; align-items: center;`},
 		playButtonContainer,
@@ -225,11 +326,6 @@ document.body.appendChild(
 		volumeIcon,
 		volumeSlider,
 		zoomButton,
-		titleText,
-		editLink,
-		copyLink,
-		shareLink,
-		fullscreenLink,
 	),
 );
 
@@ -258,6 +354,8 @@ function loadSong(songString: string, reuseParams: boolean): void {
 	synth.setSong(songString);
 	synth.snapToStart();
 	syncAudioTrack();
+	titleText.textContent = "MyBox Song";
+	songMeta.textContent = `${synth.song!.tempo} BPM / ${synth.song!.barCount} bars / ${synth.song!.audioTracks.length} audio ${synth.song!.audioTracks.length == 1 ? "track" : "tracks"}`;
 	const updatedSongString: string = synth.song!.toBase64String();
 	editLink.href = "../#" + updatedSongString;
 	const hashQueryParams = new URLSearchParams(reuseParams ? location.hash.slice(1) : "");
@@ -278,14 +376,13 @@ function syncAudioTrack(): void {
 		element.src = track.dataUrl;
 		element.load();
 		const playback: AudioTrackPlayback = {element, gain: null, pan: null, lowpass: null, highpass: null};
-		if (typeof AudioContext != "undefined") {
-			const context = new AudioContext();
-			const source = context.createMediaElementSource(element);
-			playback.gain = context.createGain();
-			playback.pan = context.createStereoPanner();
-			playback.lowpass = context.createBiquadFilter();
-			playback.highpass = context.createBiquadFilter();
-			source.connect(playback.highpass).connect(playback.lowpass).connect(playback.gain).connect(playback.pan).connect(context.destination);
+		if (audioContext != null) {
+			const source = audioContext.createMediaElementSource(element);
+			playback.gain = audioContext.createGain();
+			playback.pan = audioContext.createStereoPanner();
+			playback.lowpass = audioContext.createBiquadFilter();
+			playback.highpass = audioContext.createBiquadFilter();
+			source.connect(playback.highpass).connect(playback.lowpass).connect(playback.gain).connect(playback.pan).connect(audioContext.destination);
 		}
 		audioTracks.push(playback);
 	}
@@ -309,6 +406,26 @@ function syncAudioPosition(): void {
 		if (playback.pan != null) playback.pan.pan.value = track.pan;
 		if (playback.lowpass != null) playback.lowpass.frequency.value = track.lowpass > 0 ? track.lowpass : 22050;
 		if (playback.highpass != null) playback.highpass.frequency.value = track.highpass > 0 ? track.highpass : 0;
+	}
+}
+
+function renderAudioTimeline(): void {
+	if (synth.song == null || synth.song.audioTracks.length == 0) {
+		audioTimeline.style.display = "none";
+		return;
+	}
+	audioTimeline.style.display = "";
+	audioTimelineList.textContent = "";
+	audioTimelineList.style.width = timelineWidth + "px";
+	const totalBeats: number = synth.song.barCount * synth.song.beatsPerBar;
+	for (const track of synth.song.audioTracks) {
+		const lane: HTMLDivElement = div({class: "audioTimelineLane", style: `width: ${timelineWidth}px;`});
+		const start: number = Math.max(0, Math.min(totalBeats, Number(track.startBeat) || 0));
+		const left: number = timelineWidth * start / totalBeats;
+		const clipWidth: number = Math.max(120, Math.min(timelineWidth - left, timelineWidth * 0.24));
+		const clip: HTMLDivElement = div({class: "audioTimelineClip", style: `left: ${left}px; width: ${clipWidth}px; opacity: ${track.muted ? 0.45 : 1};`}, track.name);
+		lane.appendChild(clip);
+		audioTimelineList.appendChild(lane);
 	}
 }
 
@@ -469,6 +586,7 @@ function renderPlayhead(): void {
 		
 		const boundingRect: ClientRect = visualizationContainer.getBoundingClientRect();
 		visualizationContainer.scrollLeft = pos * (timelineWidth - boundingRect.width);
+		audioTimelineList.style.transform = `translateX(-${visualizationContainer.scrollLeft}px)`;
 	}
 }
 
@@ -543,6 +661,7 @@ function renderTimeline(): void {
 		}
 	}
 	
+	renderAudioTimeline();
 	renderPlayhead();
 }
 
