@@ -14,8 +14,12 @@ import {ArrayBufferReader} from "./ArrayBufferReader.js";
 const {button, p, div, h2, input} = HTML;
 
 export class ImportPrompt implements Prompt {
-	private readonly _fileInput: HTMLInputElement = input({type: "file", accept: ".json,application/json,.mid,.midi,audio/midi,audio/x-midi"});
+	private readonly _fileInput: HTMLInputElement = input({type: "file", accept: ".json,application/json,.mid,.midi,audio/midi,audio/x-midi,audio/*,.mp3,.wav,.ogg,.m4a"});
+	private readonly _midiTrackSelection: HTMLDivElement = div({style: "display: none; text-align: left; margin: 0.75em 0;"});
 	private readonly _cancelButton: HTMLButtonElement = button({class: "cancelButton"});
+	private readonly _importMidiButton: HTMLButtonElement = button({type: "button", style: "display: none;"}, "Import Selected Tracks");
+	private _pendingMidiBuffer: ArrayBuffer | null = null;
+	private _selectedMidiChannels: Set<number> | null = null;
 	
 	public readonly container: HTMLDivElement = div({class: "prompt noSelection", style: "width: 300px;"},
 		h2("Import"),
@@ -26,6 +30,8 @@ export class ImportPrompt implements Prompt {
 			"MyBox can also (crudely) import .mid files. There are many tools available for creating .mid files. Shorter and simpler songs are more likely to work well.",
 		),
 		this._fileInput,
+		this._midiTrackSelection,
+		this._importMidiButton,
 		this._cancelButton,
 	);
 	
@@ -34,6 +40,7 @@ export class ImportPrompt implements Prompt {
 		setTimeout(()=>this._fileInput.focus());
 		
 		this._fileInput.addEventListener("change", this._whenFileSelected);
+		this._importMidiButton.addEventListener("click", this._whenImportMidiClicked);
 		this._cancelButton.addEventListener("click", this._close);
 	}
 	
@@ -43,6 +50,7 @@ export class ImportPrompt implements Prompt {
 	
 	public cleanUp = (): void => { 
 		this._fileInput.removeEventListener("change", this._whenFileSelected);
+		this._importMidiButton.removeEventListener("click", this._whenImportMidiClicked);
 		this._cancelButton.removeEventListener("click", this._close);
 	}
 	
@@ -62,15 +70,36 @@ export class ImportPrompt implements Prompt {
 		} else if (extension == "midi" || extension == "mid") {
 			const reader: FileReader = new FileReader();
 			reader.addEventListener("load", (event: Event): void => {
-				this._doc.prompt = null;
-				this._doc.goBackToStart();
 				this._parseMidiFile(<ArrayBuffer>reader.result);
 			});
 			reader.readAsArrayBuffer(file);
+		} else if (file.type.startsWith("audio/") || ["mp3", "wav", "ogg", "m4a"].indexOf(extension) != -1) {
+			const reader: FileReader = new FileReader();
+			reader.addEventListener("load", (): void => {
+				const songObject: any = this._doc.song.toJsonObject();
+				songObject.audioTrack = {name: file.name, mimeType: file.type || "audio/wav", dataUrl: reader.result, startBeat: 0, gain: 1};
+				this._doc.prompt = null;
+				this._doc.goBackToStart();
+				this._doc.record(new ChangeSong(this._doc, JSON.stringify(songObject)), true, true);
+			});
+			reader.readAsDataURL(file);
 		} else {
 			console.error("Unrecognized file extension.");
 			this._close();
 		}
+	}
+
+	private _whenImportMidiClicked = (): void => {
+		if (this._pendingMidiBuffer == null) return;
+		this._selectedMidiChannels = new Set<number>();
+		for (const checkbox of Array.from(this._midiTrackSelection.querySelectorAll<HTMLInputElement>("input[type=checkbox]"))) {
+			if (checkbox.checked) this._selectedMidiChannels.add(Number(checkbox.value));
+		}
+		const buffer: ArrayBuffer = this._pendingMidiBuffer;
+		this._pendingMidiBuffer = null;
+		this._midiTrackSelection.style.display = "none";
+		this._importMidiButton.style.display = "none";
+		this._parseMidiFile(buffer);
 	}
 	
 	private _parseMidiFile(buffer: ArrayBuffer): void {
@@ -368,6 +397,26 @@ export class ImportPrompt implements Prompt {
 		}
 		
 		// Now the MIDI file is fully parsed. Next, constuct MyBox channels out of the data.
+		if (this._selectedMidiChannels == null) {
+			this._pendingMidiBuffer = buffer;
+			this._midiTrackSelection.textContent = "";
+			const heading: HTMLParagraphElement = document.createElement("p");
+			heading.textContent = "Select MIDI tracks to import:";
+			this._midiTrackSelection.appendChild(heading);
+			for (let midiChannel: number = 0; midiChannel < 16; midiChannel++) {
+				if (noteEvents[midiChannel].length == 0) continue;
+				const row: HTMLLabelElement = document.createElement("label");
+				row.style.display = "block";
+				const checkbox: HTMLInputElement = input({type: "checkbox", value: String(midiChannel)});
+				checkbox.checked = true;
+				row.appendChild(checkbox);
+				row.appendChild(document.createTextNode(" MIDI channel " + (midiChannel + 1)));
+				this._midiTrackSelection.appendChild(row);
+			}
+			this._midiTrackSelection.style.display = "block";
+			this._importMidiButton.style.display = "inline-block";
+			return;
+		}
 		const microsecondsPerMinute: number = 60 * 1000 * 1000;
 		const beatsPerMinute: number = Math.max(Config.tempoMin, Math.min(Config.tempoMax, Math.round(microsecondsPerMinute / microsecondsPerBeat)));
 		const midiTicksPerPart: number = midiTicksPerBeat / Config.partsPerBeat;
@@ -388,6 +437,7 @@ export class ImportPrompt implements Prompt {
 		const pitchChannels: Channel[] = [];
 		const noiseChannels: Channel[] = [];
 		for (let midiChannel: number = 0; midiChannel < 16; midiChannel++) {
+			if (!this._selectedMidiChannels.has(midiChannel)) continue;
 			if (noteEvents[midiChannel].length == 0) continue;
 			
 			const channel: Channel = new Channel();
@@ -865,6 +915,7 @@ export class ImportPrompt implements Prompt {
 		this._doc.goBackToStart();
 		for (const channel of this._doc.song.channels) channel.muted = false;
 		this._doc.prompt = null;
+		this._selectedMidiChannels = null;
 		this._doc.record(new ChangeImportMidi(this._doc), true, true);
 	}
 }
