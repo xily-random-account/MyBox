@@ -3,7 +3,7 @@ import {SongDocument} from "./SongDocument.js";
 import {ChangeSong} from "./changes.js";
 import {HTML} from "imperative-html/dist/esm/elements-strict.js";
 
-const {a, button, div, h2, input, p} = HTML;
+const {a, button, div, h2, input, p, select, option} = HTML;
 
 export class AudioPrompt implements Prompt {
 	private readonly _fileInput: HTMLInputElement = input({type: "file", multiple: true, accept: "audio/*,.mp3,.wav,.ogg,.m4a"});
@@ -66,7 +66,7 @@ export class AudioPrompt implements Prompt {
 		reader.addEventListener("load", () => {
 			const songObject: any = this._doc.song.toJsonObject();
 			const audioTracks: any[] = Array.isArray(songObject.audioTracks) ? songObject.audioTracks : [];
-			audioTracks.push({name, mimeType: blob.type || "audio/wav", dataUrl: reader.result, startBeat: 0, gain: 1, pan: 0, fadeIn: 0, fadeOut: 0, muted: false, lowpass: 0, highpass: 0});
+			audioTracks.push({name, mimeType: blob.type || "audio/wav", dataUrl: reader.result, startBeat: 0, gain: 1, pan: 0, fadeIn: 0, fadeOut: 0, muted: false, lowpass: 0, highpass: 0, automation: []});
 			songObject.audioTracks = audioTracks;
 			delete songObject.audioTrack;
 			this._doc.record(new ChangeSong(this._doc, JSON.stringify(songObject)));
@@ -105,6 +105,37 @@ export class AudioPrompt implements Prompt {
 		this._renderTrackList();
 	}
 
+	private _addAutomationPoint(trackIndex: number, target: string, beat: number, value: number): void {
+		const songObject: any = this._doc.song.toJsonObject();
+		const audioTracks: any[] = Array.isArray(songObject.audioTracks) ? songObject.audioTracks : [];
+		const track: any = audioTracks[trackIndex];
+		if (track == undefined) return;
+		track.automation = Array.isArray(track.automation) ? track.automation : [];
+		let lane: any = track.automation.find((candidate: any) => candidate.target == target);
+		if (lane == undefined) {
+			lane = {target, points: []};
+			track.automation.push(lane);
+		}
+		lane.points.push({beat: Math.max(0, beat), value});
+		lane.points.sort((a: any, b: any) => a.beat - b.beat);
+		songObject.audioTracks = audioTracks;
+		this._doc.record(new ChangeSong(this._doc, JSON.stringify(songObject)));
+		this._renderTrackList();
+	}
+
+	private _removeAutomationPoint(trackIndex: number, target: string, pointIndex: number): void {
+		const songObject: any = this._doc.song.toJsonObject();
+		const audioTracks: any[] = Array.isArray(songObject.audioTracks) ? songObject.audioTracks : [];
+		const track: any = audioTracks[trackIndex];
+		const lane: any = track?.automation?.find((candidate: any) => candidate.target == target);
+		if (lane == undefined) return;
+		lane.points.splice(pointIndex, 1);
+		track.automation = track.automation.filter((candidate: any) => candidate.points.length > 0);
+		songObject.audioTracks = audioTracks;
+		this._doc.record(new ChangeSong(this._doc, JSON.stringify(songObject)));
+		this._renderTrackList();
+	}
+
 	private _renderTrackList(): void {
 		this._trackList.textContent = "";
 		const tracks: any[] = this._doc.song.audioTracks;
@@ -133,6 +164,39 @@ export class AudioPrompt implements Prompt {
 			mute.addEventListener("change", () => this._updateTrack(index, {muted: mute.checked}));
 			controls.append("Mute", mute);
 			row.appendChild(controls);
+			const automation = div({style: "margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--secondary-text);"});
+			const automationTitle = document.createElement("strong");
+			automationTitle.textContent = "Automation";
+			automation.appendChild(automationTitle);
+			const automationTracks: any[] = Array.isArray(track.automation) ? track.automation : [];
+			for (const lane of automationTracks) {
+				const laneRow = div({style: "margin-top: 4px;"}, lane.target);
+				lane.points.forEach((point: any, pointIndex: number) => {
+					const remove = button({type: "button", style: "margin-left: 5px;"}, "Remove");
+					remove.addEventListener("click", () => this._removeAutomationPoint(index, lane.target, pointIndex));
+					laneRow.append("  " + point.beat + ": " + point.value, remove);
+				});
+				automation.appendChild(laneRow);
+			}
+			const target = select(
+				option({value: "gain"}, "Gain"),
+				option({value: "pan"}, "Pan"),
+				option({value: "lowpass"}, "Low pass"),
+				option({value: "highpass"}, "High pass"),
+			);
+			const beat = input({type: "number", min: "0", step: "0.25", value: "0", style: "width: 5em;"});
+			const value = input({type: "number", step: "0.01", value: "1", style: "width: 5em;"});
+			const addPoint = button({type: "button", style: "margin-left: 5px;"}, "Add Point");
+			addPoint.addEventListener("click", () => {
+				const selectedTarget = target.value;
+				let nextValue = Number(value.value) || 0;
+				if (selectedTarget == "gain") nextValue = Math.max(0, Math.min(1, nextValue));
+				if (selectedTarget == "pan") nextValue = Math.max(-1, Math.min(1, nextValue));
+				if (selectedTarget == "lowpass" || selectedTarget == "highpass") nextValue = Math.max(0, Math.min(22050, nextValue));
+				this._addAutomationPoint(index, selectedTarget, Number(beat.value) || 0, nextValue);
+			});
+			automation.append(div({style: "margin-top: 5px;"}, target, beat, value, addPoint));
+			row.appendChild(automation);
 			this._trackList.appendChild(row);
 		});
 	}

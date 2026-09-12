@@ -108,6 +108,15 @@ document.head.appendChild(HTML.style({type: "text/css"}, `
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
+	.audioAutomationCurve {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+		opacity: 0.82;
+	}
 	.audioTimelineEmpty {
 		color: ${ColorConfig.secondaryText};
 		font-size: 12px;
@@ -432,16 +441,36 @@ function syncAudioPosition(): void {
 		const seconds = Math.max(0, (songBeat - track.startBeat) * 60 / synth.song.tempo);
 		if (songBeat < track.startBeat || track.muted) playback.element.pause();
 		if (Math.abs(playback.element.currentTime - seconds) > 0.18) playback.element.currentTime = seconds;
+		const automatedGain = getAutomatedValue(track, "gain", songBeat, track.gain);
+		const automatedPan = getAutomatedValue(track, "pan", songBeat, track.pan);
+		const automatedLowpass = getAutomatedValue(track, "lowpass", songBeat, track.lowpass);
+		const automatedHighpass = getAutomatedValue(track, "highpass", songBeat, track.highpass);
 		const fadeIn = track.fadeIn <= 0 ? 1 : Math.min(1, Math.max(0, (songBeat - track.startBeat) / track.fadeIn));
 		const fadeOut = track.fadeOut <= 0 || !isFinite(playback.element.duration) ? 1 : Math.min(1, Math.max(0, (playback.element.duration * synth.song.tempo / 60 - seconds) / track.fadeOut));
-		const volume = track.muted || songBeat < track.startBeat ? 0 : track.gain * fadeIn * fadeOut;
+		const volume = track.muted || songBeat < track.startBeat ? 0 : automatedGain * fadeIn * fadeOut;
 		if (playback.gain != null) playback.gain.gain.value = volume;
 		else playback.element.volume = volume;
-		if (playback.pan != null) playback.pan.pan.value = track.pan;
-		if (playback.lowpass != null) playback.lowpass.frequency.value = track.lowpass > 0 ? track.lowpass : 22050;
-		if (playback.highpass != null) playback.highpass.frequency.value = track.highpass > 0 ? track.highpass : 0;
+		if (playback.pan != null) playback.pan.pan.value = automatedPan;
+		if (playback.lowpass != null) playback.lowpass.frequency.value = automatedLowpass > 0 ? automatedLowpass : 22050;
+		if (playback.highpass != null) playback.highpass.frequency.value = automatedHighpass;
 		if (synth.playing && volume > 0 && playback.element.paused) void playback.element.play().catch(() => {});
 	}
+}
+
+function getAutomatedValue(track: any, target: string, beat: number, fallback: number): number {
+	const lane: any = Array.isArray(track.automation) ? track.automation.find((candidate: any) => candidate?.target == target) : null;
+	const points: any[] = lane?.points || [];
+	if (points.length == 0) return fallback;
+	if (beat <= points[0].beat) return points[0].value;
+	for (let index: number = 1; index < points.length; index++) {
+		if (beat <= points[index].beat) {
+			const previous = points[index - 1];
+			const current = points[index];
+			const ratio = (beat - previous.beat) / Math.max(0.0001, current.beat - previous.beat);
+			return previous.value + (current.value - previous.value) * ratio;
+		}
+	}
+	return points[points.length - 1].value;
 }
 
 function renderVisualizer(): void {
@@ -484,6 +513,31 @@ function renderAudioTimeline(): void {
 		const clipWidth: number = Math.max(120, Math.min(timelineWidth - left, timelineWidth * 0.24));
 		const clip: HTMLDivElement = div({class: "audioTimelineClip", style: `left: ${left}px; width: ${clipWidth}px; opacity: ${track.muted ? 0.45 : 1};`}, track.name);
 		lane.appendChild(clip);
+		if (Array.isArray(track.automation)) {
+			for (const automation of track.automation) {
+				const points: any[] = Array.isArray(automation.points) ? automation.points : [];
+				if (points.length < 1) continue;
+				const curve = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+				curve.setAttribute("class", "audioAutomationCurve");
+				curve.setAttribute("viewBox", `0 0 ${timelineWidth} 38`);
+				curve.setAttribute("preserveAspectRatio", "none");
+				const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+				const maxValue = automation.target == "pan" ? 1 : automation.target == "gain" ? 1 : 22050;
+				const minValue = automation.target == "pan" ? -1 : 0;
+				const pathData = points.map((point: any, index: number) => {
+					const x = totalBeats <= 0 ? 0 : Math.max(0, Math.min(timelineWidth, timelineWidth * Number(point.beat || 0) / totalBeats));
+					const normalized = Math.max(0, Math.min(1, (Number(point.value || 0) - minValue) / Math.max(1, maxValue - minValue)));
+					const y = 34 - normalized * 28;
+					return `${index == 0 ? "M" : "L"} ${x} ${y}`;
+				}).join(" ");
+				path.setAttribute("d", pathData);
+				path.setAttribute("fill", "none");
+				path.setAttribute("stroke", ColorConfig.primaryText);
+				path.setAttribute("stroke-width", "1.5");
+				curve.appendChild(path);
+				lane.appendChild(curve);
+			}
+		}
 		audioTimelineList.appendChild(lane);
 	}
 }

@@ -68,7 +68,7 @@ export class SongDocument {
 			window.sessionStorage.setItem("newestUndoIndex", "0");
 		}
 		
-		let songString: string = window.location.hash;
+		let songString: string = this._decodeHash(window.location.hash);
 		if (songString == "") {
 			songString = this._getHash();
 		}
@@ -140,16 +140,30 @@ export class SongDocument {
 	
 	private _getHash(): string {
 		if (this.prefs.displayBrowserUrl) {
-			return window.location.hash;
+			return this._decodeHash(window.location.hash);
 		} else {
 			const json: any = JSON.parse(window.sessionStorage.getItem(window.sessionStorage.getItem("currentUndoIndex")!)!);
-			return json == null ? "" : json.hash;
+			return json == null ? "" : this._decodeHash(json.hash);
 		}
+	}
+
+	private _decodeHash(hash: string): string {
+		if (hash.charAt(0) == "#") hash = hash.substring(1);
+		try {
+			return decodeURIComponent(hash);
+		} catch {
+			return hash;
+		}
+	}
+
+	private _encodeHash(hash: string): string {
+		return hash.charAt(0) == "{" ? encodeURIComponent(hash) : hash;
 	}
 	
 	private _replaceState(state: HistoryState, hash: string): void {
+		const urlHash: string = this._encodeHash(hash);
 		if (this.prefs.displayBrowserUrl) {
-			window.history.replaceState(state, "", "#" + hash);
+			window.history.replaceState(state, "", "#" + urlHash);
 		} else {
 			window.sessionStorage.setItem(window.sessionStorage.getItem("currentUndoIndex") || "0", JSON.stringify({state, hash}));
 			window.history.replaceState(null, "", location.pathname);
@@ -157,8 +171,9 @@ export class SongDocument {
 	}
 	
 	private _pushState(state: HistoryState, hash: string): void {
+		const urlHash: string = this._encodeHash(hash);
 		if (this.prefs.displayBrowserUrl) {
-			window.history.pushState(state, "", "#" + hash);
+			window.history.pushState(state, "", "#" + urlHash);
 		} else {
 			let currentIndex: number = Number(window.sessionStorage.getItem("currentUndoIndex"));
 			let oldestIndex: number = Number(window.sessionStorage.getItem("oldestUndoIndex"));
@@ -219,7 +234,7 @@ export class SongDocument {
 			this._resetSongRecoveryUid();
 			const state: HistoryState = {canUndo: true, sequenceNumber: this._sequenceNumber, bar: this.bar, channel: this.channel, instrument: this.viewedInstrument[this.channel], recoveryUid: this._recoveryUid, prompt: null, selection: this.selection.toJSON()};
 			try {
-				new ChangeSong(this, window.location.hash);
+				new ChangeSong(this, this._decodeHash(window.location.hash));
 			} catch (error) {
 				errorAlert(error);
 			}

@@ -1793,6 +1793,12 @@ export interface AudioTrack {
 	muted: boolean;
 	lowpass: number;
 	highpass: number;
+	automation: AudioTrackAutomation[];
+}
+
+export interface AudioTrackAutomation {
+	target: "gain" | "pan" | "lowpass" | "highpass";
+	points: {beat: number, value: number}[];
 }
 
 export class Song {
@@ -3344,6 +3350,13 @@ export class Song {
 				muted: audioTrack.muted === true,
 				lowpass: Math.max(0, Math.min(22050, Number(audioTrack.lowpass) || 0)),
 				highpass: Math.max(0, Math.min(22050, Number(audioTrack.highpass) || 0)),
+				automation: Array.isArray(audioTrack.automation) ? audioTrack.automation.map((lane: any) => ({
+					target: lane?.target == "pan" || lane?.target == "lowpass" || lane?.target == "highpass" ? lane.target : "gain",
+					points: Array.isArray(lane?.points) ? lane.points.map((point: any) => ({
+						beat: Math.max(0, Number(point?.beat) || 0),
+						value: Number.isFinite(Number(point?.value)) ? Number(point.value) : 0,
+					})).sort((a: {beat: number}, b: {beat: number}) => a.beat - b.beat) : [],
+				})).filter((lane: AudioTrackAutomation) => lane.points.length > 0) : [],
 			});
 		}
 		

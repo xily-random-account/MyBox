@@ -51,7 +51,8 @@ export class AudioTrackEditor {
                     fadeOut: 0,
                     muted: false,
                     lowpass: 0,
-                    highpass: 0
+                    highpass: 0,
+                    automation: []
                 });
                 songObject.audioTracks = audioTracks;
                 delete songObject.audioTrack;

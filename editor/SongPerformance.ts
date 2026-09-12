@@ -156,8 +156,26 @@ export class SongPerformance {
             }
             const seconds: number = Math.max(0, (songBeat - (Number(track.startBeat) || 0)) * secondsPerBeat);
             if (Math.abs(audio.currentTime - seconds) > 0.15) audio.currentTime = seconds;
+            const gain: number = this._getAutomatedValue(track, "gain", songBeat, Math.max(0, Math.min(1, Number(track.gain) || 0)));
+            audio.volume = gain;
             if (isPlaying && audio.paused) audio.play().catch(() => {});
         }
+    }
+
+    private _getAutomatedValue(track: any, target: string, beat: number, fallback: number): number {
+        const lane: any = Array.isArray(track.automation) ? track.automation.find((candidate: any) => candidate?.target == target) : null;
+        const points: any[] = lane?.points || [];
+        if (points.length == 0) return fallback;
+        if (beat <= points[0].beat) return points[0].value;
+        for (let index: number = 1; index < points.length; index++) {
+            if (beat <= points[index].beat) {
+                const previous = points[index - 1];
+                const current = points[index];
+                const ratio = (beat - previous.beat) / Math.max(0.0001, current.beat - previous.beat);
+                return previous.value + (current.value - previous.value) * ratio;
+            }
+        }
+        return points[points.length - 1].value;
     }
     
     // Returns true if the full interface needs to be rerendered.

@@ -251,6 +251,7 @@ export class SongEditor {
 		option({value: "transposeUp"}, "Move Notes Up (+ or ⇧+)"),
 		option({value: "transposeDown"}, "Move Notes Down (- or ⇧-)"),
 		option({value: "moveNotesSideways"}, "Move All Notes Sideways..."),
+		option({value: "automateThis"}, "Automate This"),
 		option({value: "beatsPerBar"}, "Change Beats Per Bar..."),
 		option({value: "barCount"}, "Change Song Length..."),
 		option({value: "channelSettings"}, "Channel Settings... (Q)"),
@@ -399,11 +400,6 @@ export class SongEditor {
 		this._echoSustainRow,
 		this._echoDelayRow,
 		this._reverbRow,
-		div({style: `margin: 2px 0; margin-left: 2em; display: flex; align-items: center;`},
-			span({style: `flex-grow: 1; text-align: center;`}, span({class: "tip", onclick: ()=>this._openPrompt("envelopes")}, "Envelopes")),
-			this._addEnvelopeButton,
-		),
-		this._envelopeEditor.container,
 	);
 	private readonly _instrumentSettingsGroup: HTMLDivElement = div({class: "editor-controls"},
 		div({style: `margin: 3px 0; text-align: center; color: ${ColorConfig.secondaryText};`},
@@ -418,6 +414,13 @@ export class SongEditor {
 		),
 		this._customizeInstrumentButton,
 		this._customInstrumentSettingsGroup,
+		div({class: "automationEditor", style: "margin-top: 8px;"},
+			div({style: `margin: 2px 0; display: flex; align-items: center;`},
+				span({style: `flex-grow: 1; text-align: center;`}, span({class: "tip", onclick: ()=>this._openPrompt("envelopes")}, "Automation")),
+				this._addEnvelopeButton,
+			),
+			this._envelopeEditor.container,
+		),
 	);
 	private readonly _promptContainer: HTMLDivElement = div({class: "promptContainer", style: "display: none;"});
 	private readonly _zoomInButton: HTMLButtonElement = button({class: "zoomInButton", type: "button", title: "Zoom In"});
@@ -2100,6 +2103,9 @@ export class SongEditor {
 				break;
 			case "moveNotesSideways":
 				this._openPrompt("moveNotesSideways");
+				break;
+			case "automateThis":
+				this._addNewEnvelope();
 				break;
 			case "channelSettings":
 				this._openPrompt("channelSettings");
