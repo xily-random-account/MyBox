@@ -4,7 +4,7 @@
 	"description": "MyBox is a tool for sketching and sharing instrumental melodies.",
 	"scope": "/",
 	"start_url": ".",
-	"display": "browser",
+	"display": "standalone",
 	"orientation": "portrait-primary",
 	"theme_color": "#444",
 	"background_color": "#000",

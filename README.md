@@ -13,7 +13,7 @@ valuable and have the means, any gratuity via
 [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=QZJTX9GRYEV9N&currency_code=USD)
 would be appreciated!
 
-MyBox is developed by [John Nesky](https://johnnesky.com/). This source code
+MyBox is developed by XiLy and original beepbox by [John Nesky](https://johnnesky.com/). This source code
 is available under the [MIT license](LICENSE.md).
 
 ## Synthesizer library
