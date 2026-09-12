@@ -554,6 +554,17 @@ function hashUpdatedExternally(): void {
 	
 	fullscreenLink.href = location.href;
 	const hashQueryParams = new URLSearchParams(myHash);
+	const recoveryKey = hashQueryParams.get("recovery");
+	if (recoveryKey != null) {
+		const recoveredSong = getLocalStorage(decodeURIComponent(recoveryKey));
+		if (recoveredSong == null) {
+			startupScreen.textContent = "Recovered song is no longer available.";
+			return;
+		}
+		loadSong(recoveredSong, false);
+		renderTimeline();
+		return;
+	}
 	const songParameter = hashQueryParams.get("song");
 	if (songParameter != null) {
 		loadSong(songParameter, true);

@@ -3,6 +3,7 @@
 import {SongDocument} from "./SongDocument.js";
 import {RecoveredSong, RecoveredVersion, SongRecovery, versionToKey} from "./SongRecovery.js";
 import {Prompt} from "./Prompt.js";
+import {ChangeSong} from "./changes.js";
 import {HTML} from "imperative-html/dist/esm/elements-strict.js";
 
 const {button, div, h2, p, select, option, iframe} = HTML;
@@ -38,16 +39,29 @@ export class SongRecoveryPrompt implements Prompt {
 			}
 			
 			const player: HTMLIFrameElement = iframe({style: "width: 100%; height: 60px; border: none; display: block;"});
-			player.src = "player/#song=" + window.localStorage.getItem(versionToKey(song.versions[0]));
-			const container: HTMLDivElement = div({style: "margin: 4px 0;"}, div({class: "selectContainer", style: "width: 100%; margin: 2px 0;"}, versionMenu), player);
+			const restoreButton: HTMLButtonElement = button({type: "button", style: "width: 100%; margin-top: 3px;"}, "Restore Selected Song");
+			const container: HTMLDivElement = div({style: "margin: 4px 0;"}, div({class: "selectContainer", style: "width: 100%; margin: 2px 0;"}, versionMenu), player, restoreButton);
 			this._songContainer.appendChild(container);
+			this._showVersion(player, song.versions[0]);
 			
 			versionMenu.addEventListener("change", () => {
 				const version: RecoveredVersion = song.versions[versionMenu.selectedIndex];
-				player.contentWindow!.location.replace("player/#song=" + window.localStorage.getItem(versionToKey(version)));
-				player.contentWindow!.dispatchEvent(new Event("hashchange"));
+				this._showVersion(player, version);
+			});
+			restoreButton.addEventListener("click", () => {
+				const version: RecoveredVersion = song.versions[versionMenu.selectedIndex];
+				const songData: string | null = window.localStorage.getItem(versionToKey(version));
+				if (songData == null) return;
+				this._doc.record(new ChangeSong(this._doc, songData), true);
+				this._doc.prompt = null;
+				this._doc.renderNow();
 			});
 		}
+	}
+
+	private _showVersion(player: HTMLIFrameElement, version: RecoveredVersion): void {
+		const key: string = versionToKey(version);
+		player.src = "player/#recovery=" + encodeURIComponent(key);
 	}
 	
 	private _close = (): void => { 
