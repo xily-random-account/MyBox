@@ -7,6 +7,7 @@ export class Preferences {
 	
 	public autoPlay: boolean;
 	public autoFollow: boolean;
+	public playAudioWithPlayhead: boolean;
 	public enableNotePreview: boolean;
 	public showFifth: boolean;
 	public notesOutsideScale: boolean;
@@ -38,6 +39,7 @@ export class Preferences {
 	public reload(): void {
 		this.autoPlay = this._loadBoolean("autoPlay", false);
 		this.autoFollow = this._loadBoolean("autoFollow", true);
+		this.playAudioWithPlayhead = this._loadBoolean("playAudioWithPlayhead", true);
 		this.enableNotePreview = this._loadBoolean("enableNotePreview", true);
 		this.showFifth = this._loadBoolean("showFifth", false);
 		this.notesOutsideScale = this._loadBoolean("notesOutsideScale", false);
@@ -76,6 +78,7 @@ export class Preferences {
 	public save(): void {
 		window.localStorage.setItem("autoPlay", this.autoPlay ? "true" : "false");
 		window.localStorage.setItem("autoFollow", this.autoFollow ? "true" : "false");
+		window.localStorage.setItem("playAudioWithPlayhead", this.playAudioWithPlayhead ? "true" : "false");
 		window.localStorage.setItem("enableNotePreview", this.enableNotePreview ? "true" : "false");
 		window.localStorage.setItem("showFifth", this.showFifth ? "true" : "false");
 		window.localStorage.setItem("notesOutsideScale", this.notesOutsideScale ? "true" : "false");

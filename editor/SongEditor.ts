@@ -41,6 +41,27 @@ import {Change} from "./Change.js";
 import {ChangeTempo, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeCustomizeInstrument, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument} from "./changes.js";
 
 const {a, button, div, input, select, span, optgroup, option} = HTML;
+const savedInstrumentPresetsKey: string = "myboxSavedInstrumentPresets";
+
+function getSavedInstrumentPresets(): any[] {
+	try {
+		const saved: any = JSON.parse(window.localStorage.getItem(savedInstrumentPresetsKey) || "[]");
+		return Array.isArray(saved) ? saved : [];
+	} catch {
+		return [];
+	}
+}
+
+function addSavedPresetOptions(menu: HTMLSelectElement, isNoise: boolean): void {
+	const savedPresets: any[] = getSavedInstrumentPresets();
+	const group: HTMLElement = optgroup({label: "Saved Presets"});
+	for (let index: number = 0; index < savedPresets.length; index++) {
+		if (savedPresets[index]?.isNoise == isNoise && savedPresets[index]?.settings != null) {
+			group.appendChild(option({value: "savedPreset:" + index}, savedPresets[index].name || "Saved Instrument"));
+		}
+	}
+	if (group.children.length > 0) menu.appendChild(group);
+}
 
 function buildOptions(menu: HTMLSelectElement, items: ReadonlyArray<string | number>): HTMLSelectElement {
 	for (let index: number = 0; index < items.length; index++) {
@@ -55,9 +76,11 @@ function buildPresetOptions(isNoise: boolean): HTMLSelectElement {
 	menu.appendChild(optgroup({label: "Edit"},
 		option({value: "copyInstrument"}, "Copy Instrument (⇧C)"),
 		option({value: "pasteInstrument"}, "Paste Instrument (⇧V)"),
+		option({value: "savePreset"}, "Save Instrument Preset..."),
 		option({value: "randomPreset"}, "Random Preset (R)"),
 		option({value: "randomGenerated"}, "Random Generated (⇧R)"),
 	));
+	addSavedPresetOptions(menu, isNoise);
 	
 	// Show the "spectrum" custom type in both pitched and noise channels.
 	const customTypeGroup: HTMLElement = optgroup({label: EditorConfig.presetCategories[0].name});
@@ -236,6 +259,7 @@ export class SongEditor {
 		option({selected: true, disabled: true, hidden: hideSelectMenuTitlesInOptions}, "Preferences"),
 		option({value: "autoPlay"}, "Auto Play on Load"),
 		option({value: "autoFollow"}, "Automatically View Current Bar"),
+		option({value: "playAudioWithPlayhead"}, "Play Audio With Playhead"),
 		option({value: "enableNotePreview"}, "Hear Preview of Added Notes"),
 		option({value: "showLetters"}, "Show Piano Keys"),
 		option({value: "showFifth"}, 'Highlight "Fifth" of Song Key'),
@@ -851,6 +875,7 @@ export class SongEditor {
 		const optionCommands: ReadonlyArray<string> = [
 			(prefs.autoPlay ? "✓ " : "　") + "Auto Play on Load",
 			(prefs.autoFollow ? "✓ " : "　") + "Automatically View Current Bar",
+			(prefs.playAudioWithPlayhead ? "✓ " : "　") + "Play Audio With Playhead",
 			(prefs.enableNotePreview ? "✓ " : "　") + "Hear Preview of Added Notes",
 			(prefs.showLetters ? "✓ " : "　") + "Show Piano Keys",
 			(prefs.showFifth ? "✓ " : "　") + 'Highlight "Fifth" of Song Key',
@@ -1797,6 +1822,25 @@ export class SongEditor {
 	private _randomGenerated(): void {
 		this.doc.record(new ChangeRandomGeneratedInstrument(this.doc));
 	}
+
+	private _savePreset(): void {
+		const name: string = window.prompt("Preset name:", "My Instrument")?.trim() || "";
+		if (name == "") return;
+		const instrument: Instrument = this.doc.song.channels[this.doc.channel].instruments[this.doc.getCurrentInstrument()];
+		const settings: any = instrument.toJsonObject();
+		delete settings["preset"];
+		const savedPresets: any[] = getSavedInstrumentPresets();
+		savedPresets.push({name, isNoise: this.doc.song.getChannelIsNoise(this.doc.channel), settings});
+		window.localStorage.setItem(savedInstrumentPresetsKey, JSON.stringify(savedPresets));
+		this._refreshPresetMenus();
+	}
+
+	private _refreshPresetMenus(): void {
+		for (const menu of [this._pitchedPresetSelect, this._drumPresetSelect]) {
+			const replacement: HTMLSelectElement = buildPresetOptions(menu == this._drumPresetSelect);
+			menu.replaceChildren(...Array.from(replacement.children));
+		}
+	}
 	
 	private _whenSetTempo = (): void => {
 		this.doc.record(new ChangeTempo(this.doc, -1, parseInt(this._tempoStepper.value) | 0));
@@ -1850,13 +1894,24 @@ export class SongEditor {
 	}
 	
 	private _setPreset(preset: string): void {
-		if (isNaN(<number> <unknown> preset)) {
+		if (preset.indexOf("savedPreset:") == 0) {
+			const savedIndex: number = parseInt(preset.substring("savedPreset:".length));
+			const savedPreset: any = getSavedInstrumentPresets()[savedIndex];
+			const expectedNoise: boolean = this.doc.song.getChannelIsNoise(this.doc.channel);
+			if (savedPreset?.isNoise == expectedNoise && savedPreset.settings != null) {
+				const instrument: Instrument = this.doc.song.channels[this.doc.channel].instruments[this.doc.getCurrentInstrument()];
+				this.doc.record(new ChangePasteInstrument(this.doc, instrument, {...savedPreset.settings, isDrum: expectedNoise}));
+			}
+		} else if (isNaN(<number> <unknown> preset)) {
 			switch (preset) {
 				case "copyInstrument":
 					this._copyInstrument();
 					break;
 				case "pasteInstrument":
 					this._pasteInstrument();
+					break;
+				case "savePreset":
+					this._savePreset();
 					break;
 				case "randomPreset":
 					this._randomPreset();
@@ -2060,6 +2115,9 @@ export class SongEditor {
 				break;
 			case "autoFollow":
 				this.doc.prefs.autoFollow = !this.doc.prefs.autoFollow;
+				break;
+			case "playAudioWithPlayhead":
+				this.doc.prefs.playAudioWithPlayhead = !this.doc.prefs.playAudioWithPlayhead;
 				break;
 			case "enableNotePreview":
 				this.doc.prefs.enableNotePreview = !this.doc.prefs.enableNotePreview;

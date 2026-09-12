@@ -32,6 +32,18 @@ document.head.appendChild(HTML.style({type: "text/css"}, `
 		background: ${ColorConfig.editorBackground};
 		box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
 	}
+	.playerStartup {
+		position: fixed;
+		inset: 0;
+		z-index: 10;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: ${ColorConfig.editorBackground};
+		color: ${ColorConfig.primaryText};
+		font-size: 18px;
+		font-weight: bold;
+	}
 	.playerHeader h1 {
 		font-size: 17px;
 		letter-spacing: 0.02em;
@@ -100,6 +112,14 @@ document.head.appendChild(HTML.style({type: "text/css"}, `
 		color: ${ColorConfig.secondaryText};
 		font-size: 12px;
 		padding: 8px 0 2px;
+	}
+	.playerVisualizer {
+		position: absolute;
+		inset: auto 0 0;
+		width: 100%;
+		height: 72px;
+		pointer-events: none;
+		opacity: 0.72;
 	}
 	.playerTransport {
 		box-sizing: border-box;
@@ -271,6 +291,12 @@ interface AudioTrackPlayback {
 const audioTracks: AudioTrackPlayback[] = [];
 const audioContextConstructor: any = (<any>window).AudioContext || (<any>window).webkitAudioContext;
 const audioContext: any = audioContextConstructor == undefined ? null : new audioContextConstructor();
+const audioAnalyser: AnalyserNode | null = audioContext == null ? null : audioContext.createAnalyser();
+if (audioAnalyser != null) {
+	audioAnalyser.fftSize = 128;
+	audioAnalyser.smoothingTimeConstant = 0.78;
+	audioAnalyser.connect(audioContext.destination);
+}
 const isMobile: boolean = matchMedia("(pointer:coarse)").matches;
 synth.anticipatePoorPerformance = isMobile;
 
@@ -308,14 +334,19 @@ const timeline: SVGSVGElement = svg({style: "min-width: 0; min-height: 0; touch-
 const playhead: HTMLDivElement = div({style: `position: absolute; left: 0; top: 0; width: 2px; height: 100%; background: ${ColorConfig.playhead}; pointer-events: none;`});
 const timelineContainer: HTMLDivElement = div({style: "display: flex; flex-grow: 1; flex-shrink: 1; position: relative;"}, timeline, playhead);
 const visualizationContainer: HTMLDivElement = div({style: "display: flex; flex-grow: 1; flex-shrink: 1; height: 0; position: relative; align-items: center; overflow: hidden;"}, timelineContainer);
+const visualizerCanvas: HTMLCanvasElement = document.createElement("canvas");
+visualizerCanvas.className = "playerVisualizer";
+visualizationContainer.appendChild(visualizerCanvas);
 const audioTimelineList: HTMLDivElement = div({class: "audioTimelineList"});
 const audioTimelineViewport: HTMLDivElement = div({class: "audioTimelineViewport"}, audioTimelineList);
 const audioTimeline: HTMLDivElement = div({class: "audioTimeline"},
 	div({class: "audioTimelineHeader"}, "Audio tracks"),
 	audioTimelineViewport,
 );
+const startupScreen: HTMLDivElement = div({class: "playerStartup"}, "Loading song...");
 
 visualizationContainer.classList.add("playerVisualization");
+document.body.appendChild(startupScreen);
 document.body.appendChild(div({class: "playerHeader"}, titleText, songMeta, div({class: "playerLinks"}, editLink, copyLink, shareLink, fullscreenLink)));
 document.body.appendChild(visualizationContainer);
 document.body.appendChild(audioTimeline);
@@ -351,16 +382,19 @@ function getLocalStorage(key: string): string | null {
 }
 
 function loadSong(songString: string, reuseParams: boolean): void {
-	synth.setSong(songString);
+	try {
+		synth.setSong(songString);
+	} catch (error) {
+		startupScreen.textContent = "This song could not be loaded.";
+		console.error(error);
+		return;
+	}
 	synth.snapToStart();
 	syncAudioTrack();
 	titleText.textContent = "MyBox Song";
 	songMeta.textContent = `${synth.song!.tempo} BPM / ${synth.song!.barCount} bars / ${synth.song!.audioTracks.length} audio ${synth.song!.audioTracks.length == 1 ? "track" : "tracks"}`;
-	const updatedSongString: string = synth.song!.toBase64String();
-	editLink.href = "../#" + updatedSongString;
-	const hashQueryParams = new URLSearchParams(reuseParams ? location.hash.slice(1) : "");
-	hashQueryParams.set("song", updatedSongString);
-	location.hash = hashQueryParams.toString();
+	editLink.href = "../#" + songString;
+	startupScreen.remove();
 }
 
 function syncAudioTrack(): void {
@@ -382,7 +416,7 @@ function syncAudioTrack(): void {
 			playback.pan = audioContext.createStereoPanner();
 			playback.lowpass = audioContext.createBiquadFilter();
 			playback.highpass = audioContext.createBiquadFilter();
-			source.connect(playback.highpass).connect(playback.lowpass).connect(playback.gain).connect(playback.pan).connect(audioContext.destination);
+			source.connect(playback.highpass).connect(playback.lowpass).connect(playback.gain).connect(playback.pan).connect(audioAnalyser || audioContext.destination);
 		}
 		audioTracks.push(playback);
 	}
@@ -406,6 +440,31 @@ function syncAudioPosition(): void {
 		if (playback.pan != null) playback.pan.pan.value = track.pan;
 		if (playback.lowpass != null) playback.lowpass.frequency.value = track.lowpass > 0 ? track.lowpass : 22050;
 		if (playback.highpass != null) playback.highpass.frequency.value = track.highpass > 0 ? track.highpass : 0;
+		if (synth.playing && volume > 0 && playback.element.paused) void playback.element.play().catch(() => {});
+	}
+}
+
+function renderVisualizer(): void {
+	const context = visualizerCanvas.getContext("2d");
+	if (context == null) return;
+	const width = visualizerCanvas.clientWidth;
+	const height = visualizerCanvas.clientHeight;
+	if (width == 0 || height == 0) return;
+	const pixelRatio = window.devicePixelRatio || 1;
+	if (visualizerCanvas.width != width * pixelRatio || visualizerCanvas.height != height * pixelRatio) {
+		visualizerCanvas.width = width * pixelRatio;
+		visualizerCanvas.height = height * pixelRatio;
+		context.scale(pixelRatio, pixelRatio);
+	}
+	context.clearRect(0, 0, width, height);
+	if (audioAnalyser == null || !synth.playing) return;
+	const values = new Uint8Array(audioAnalyser.frequencyBinCount);
+	audioAnalyser.getByteFrequencyData(values);
+	const barWidth = Math.max(2, width / values.length - 1);
+	for (let i = 0; i < values.length; i++) {
+		const barHeight = values[i] / 255 * height;
+		context.fillStyle = ColorConfig.linkAccent;
+		context.fillRect(i * (barWidth + 1), height - barHeight, barWidth, barHeight);
 	}
 }
 
@@ -439,29 +498,22 @@ function hashUpdatedExternally(): void {
 		myHash = myHash.substring(1);
 	}
 	
-	//titleText.textContent = "";
-	
 	fullscreenLink.href = location.href;
-	
-	for (const parameter of myHash.split("&")) {
-		let equalsIndex: number = parameter.indexOf("=");
-		if (equalsIndex != -1) {
-			let paramName: string = parameter.substring(0, equalsIndex);
-			let value: string = parameter.substring(equalsIndex + 1);
-			switch (paramName) {
-				case "song":
-					loadSong(value, true);
-					break;
-				//case "title":
-				//	titleText.textContent = decodeURIComponent(value);
-				//	break;
-				case "loop":
-					synth.loopRepeatCount = (value != "1") ? 0 : -1;
-					renderLoopIcon();
-					break;
-			}
-		} else {
-			loadSong(myHash, false);
+	const hashQueryParams = new URLSearchParams(myHash);
+	const songParameter = hashQueryParams.get("song");
+	if (songParameter != null) {
+		loadSong(songParameter, true);
+		const loopParameter = hashQueryParams.get("loop");
+		if (loopParameter != null) {
+			synth.loopRepeatCount = loopParameter == "1" ? -1 : 0;
+			renderLoopIcon();
+		}
+	} else {
+		try {
+			loadSong(decodeURIComponent(myHash), false);
+		} catch (error) {
+			startupScreen.textContent = "This song could not be loaded.";
+			console.error(error);
 		}
 	}
 	
@@ -491,6 +543,7 @@ function animate(): void {
 	if (synth.playing) {
 		animationRequest = requestAnimationFrame(animate);
 		renderPlayhead();
+		renderVisualizer();
 	}
 	if (pauseButtonDisplayed != synth.playing) {
 		renderPlayButton();
