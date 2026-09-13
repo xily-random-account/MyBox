@@ -1,6 +1,4 @@
 const CACHE_NAME = "MyBox-v6";
-
-// All core files needed for offline startup
 const CORE_ASSETS = [
   "/index.html",
   "/style.css",
@@ -12,35 +10,24 @@ const CORE_ASSETS = [
   "/icon_maskable_192.png",
   "/icon_shadow_192.png",
   "/icon_windows_150.png",
-
-  // Version 2.3
   "/2_3/index.html",
   "/2_3/beepbox_editor.min.js",
   "/2_3/beepbox_offline.html",
-
-  // Version 3.0
   "/3_0/index.html",
   "/3_0/beepbox_editor.min.js",
   "/3_0/beepbox_offline.html",
   "/3_0/player/index.html",
   "/3_0/player/beepbox_player.min.js",
-
-  // Main player
   "/player/index.html",
   "/player/beepbox_player.min.js",
-
-  // Offline fallback
   "/offline.html"
 ];
 
-// Send progress updates to the page
+// Send progress updates
 function sendProgress(progress) {
   self.clients.matchAll().then(clients => {
     clients.forEach(client => {
-      client.postMessage({
-        type: "CACHE_PROGRESS",
-        progress
-      });
+      client.postMessage({ type: "CACHE_PROGRESS", progress });
     });
   });
 }
@@ -57,7 +44,6 @@ self.addEventListener("install", event => {
         } catch (e) {
           console.warn("Failed to cache:", asset, e);
         }
-
         completed++;
         sendProgress(Math.round((completed / total) * 100));
       }
@@ -77,22 +63,31 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
+    (async () => {
+      try {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
 
-      return fetch(event.request)
-        .then(response => {
+        const response = await fetch(event.request);
+        if (response && response.ok) {
           if (
             event.request.url.startsWith(self.location.origin) ||
             event.request.url.includes("cdn.jsdelivr.net")
           ) {
-            caches.open(CACHE_NAME).then(cache =>
-              cache.put(event.request, response.clone())
-            );
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(event.request, response.clone());
           }
           return response;
-        })
-        .catch(() => caches.match("/offline.html"));
-    })
+        }
+
+        // Fallback if response is not ok
+        const fallback = await caches.match("/offline.html");
+        return fallback || new Response("Offline", { status: 503 });
+      } catch (err) {
+        console.warn("Fetch failed:", event.request.url, err);
+        const fallback = await caches.match("/offline.html");
+        return fallback || new Response("Offline", { status: 503 });
+      }
+    })()
   );
 });
