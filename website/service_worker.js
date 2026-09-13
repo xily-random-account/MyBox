@@ -1,40 +1,67 @@
-const CACHE_NAME = "MyBox-v5";
+const CACHE_NAME = "MyBox-v6";
+
+// All core files needed for offline startup
 const CORE_ASSETS = [
-  "/website/index.html",
-  "/website/style.css",
-  "/website/service_worker.js",
-  "/website/mybox_offline_template.html",
-  "/website/favicon.ico",
-  "/website/apple-touch-icon.png",
-  "/website/icon_32.png",
-  "/website/icon_maskable_192.png",
-  "/website/icon_shadow_192.png",
-  "/website/icon_windows_150.png",
+  "/index.html",
+  "/style.css",
+  "/service_worker.js",
+  "/mybox_offline_template.html",
+  "/favicon.ico",
+  "/apple-touch-icon.png",
+  "/icon_32.png",
+  "/icon_maskable_192.png",
+  "/icon_shadow_192.png",
+  "/icon_windows_150.png",
 
   // Version 2.3
-  "/website/2_3/index.html",
-  "/website/2_3/beepbox_editor.min.js",
-  "/website/2_3/beepbox_offline.html",
+  "/2_3/index.html",
+  "/2_3/beepbox_editor.min.js",
+  "/2_3/beepbox_offline.html",
 
   // Version 3.0
-  "/website/3_0/index.html",
-  "/website/3_0/beepbox_editor.min.js",
-  "/website/3_0/beepbox_offline.html",
-  "/website/3_0/player/index.html",
-  "/website/3_0/player/beepbox_player.min.js",
+  "/3_0/index.html",
+  "/3_0/beepbox_editor.min.js",
+  "/3_0/beepbox_offline.html",
+  "/3_0/player/index.html",
+  "/3_0/player/beepbox_player.min.js",
 
   // Main player
-  "/website/player/index.html",
-  "/website/player/beepbox_player.min.js",
+  "/player/index.html",
+  "/player/beepbox_player.min.js",
 
   // Offline fallback
-  "/website/offline.html"
+  "/offline.html"
 ];
+
+// Send progress updates to the page
+function sendProgress(progress) {
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({
+        type: "CACHE_PROGRESS",
+        progress
+      });
+    });
+  });
+}
 
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(async cache => {
+      let completed = 0;
+      const total = CORE_ASSETS.length;
+
+      for (const asset of CORE_ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (e) {
+          console.warn("Failed to cache:", asset, e);
+        }
+
+        completed++;
+        sendProgress(Math.round((completed / total) * 100));
+      }
+    }).then(() => self.skipWaiting())
   );
 });
 
@@ -65,7 +92,7 @@ self.addEventListener("fetch", event => {
           }
           return response;
         })
-        .catch(() => caches.match("/website/offline.html"));
+        .catch(() => caches.match("/offline.html"));
     })
   );
 });

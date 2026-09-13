@@ -1,73 +1,78 @@
-# MyBox
+# My Box Lemon
+> A literal DAW (yet to be). IN THE BROWSER!
 
-MyBox is an online tool for sketching and sharing instrumental melodies.
-Try it out [here](https://www.mybox.co)!
+This project is owned and affiliated with [OpenFiddles](https://github.com/OpenFiddles), this is my burner account for temporary access to github. (Xily-random-account)
+## About MBL 
+Don’t question why there is _Lemon_ in its name, it was originally ***My Box***, but _Vercel_ made it 100x better. I did not intend for it to be a _Lemon_, but Vercel gave it to me as:
+> https://my-box-lemon.vercel.app
 
-All song data is packaged into the URL at the top of your browser. When you make
-changes to the song, the URL is updated to reflect your changes. When you are
-satisfied with your song, just copy and paste the URL to save and share your
-song!
+But MBL is planning to be what it says, a literal DAW, in the browser. Developed by [Alyshia](https://github.com/xi-self13), and thanks to the original creator, ***[John Nesky](https://johnnesky.com/)*** for making it open-sourced under the MIT License and making it free to be. MBL is currently in **Alpha** as so far as the overhaul, so far, we got:
+### What’s New :3
+* Overhauled the UI 
+* Added a basic audio file tracks, and player (SUPER BUGGY![^1])
+* Added an automation system (it’s still envelopes for now, ALPHA!)
 
-MyBox is a passion project, and will always be free to use.
+### What Broke :[
+* Service worker wont cache the site.
+* Deleting Audio can corrupt your song data and unhash it!
+* The url data unhashes for some reason and puts the full JSON in the URL Bar. (OKAY, kinda)
+* ~~Song Player Broke~~ (FIXED!)
+* Report more at [Issues](https://github.com/xily-random-account/MyBox/issues).
 
-MyBox is developed by XiLy and original beepbox by [John Nesky](https://johnnesky.com/). This source code
-is available under the [MIT license](LICENSE.md).
+I’m planning to go more Logic Pro by Apple style. But not so complicated to where the caching system breaks! Also planning to make it natively run on Windows, MacOS, Linux, Android, and IOS[^2]. Also what that saying, its gonna be complicated, but it will need to download what it needs on the spot (Like plugins, the encoder (or use the lightest version, the one beepbox uses). I’ve currently fixed the interface to zoom without the text at the bottom (later implemented in its own dialog).
+## Cloning The Project
 
-## Synthesizer library
-
-You can use MyBox's synthesizer to play music in your own web app! See
-[the npm package](https://www.npmjs.com/package/mybox) for more details.
-
-## Compiling
-
-The code is written in TypeScript, which requires Node & npm so
-[install those first](https://nodejs.org/en/download). To contribute changes,
-you'll also need [git](https://github.com/git-guides/install-git). Then to build
-this project, open the command line and run:
-
-```
+To clone, run:
+```batch 
 git clone https://github.com/xily-random-account/MyBox.git
-cd mybox
+```
+
+Then create and cd into your directory:
+```batch
+mkdir MyBox && cd MyBox
+```
+
+Then install the required depends using this command:
+```batch
+npm install
+```
+## How to build it!
+The DAW has 3 parts to build: **The Syth Engine, Song Player, and The Editor DAW itself.** Node.js and NPM is required to build.
+
+### Syth
+To build the Synthesizer Engine, you got to run:
+```batch
+npm run build-synth
+```
+
+### Editor
+To build the DAW Editor, you run:
+```batch
+npm run build-editor
+```
+
+### Player
+To build the Song Player, you run:
+```batch
+npm run build-player
+```
+
+### 1 Full Build
+It comes fully equipped to automatically build everything, run:
+```batch
+npm run build
+```
+
+## Power Command
+1 full block to make your life easier!
+```batch
+git clone https://github.com/xily-random-account/MyBox.git
+mkdir MyBox && cd MyBox
 npm install
 npm run build
 ```
 
-## Code
-
-The code is divided into several folders.
-
-The [synth/](synth) folder has just the code you need to be able to play MyBox
-songs out loud, and you could use this code in your own projects, like a web
-game. After compiling the synth code, open website/synth_example.html to see a
-demo using it. To rebuild just the synth code, run:
-
-```
-npm run build-synth
-```
-
-The [editor/](editor) folder has additional code to display the online song
-editor interface. After compiling the editor code, open website/index.html to
-see the editor interface. To rebuild just the editor code, run:
-
-```
-npm run build-editor
-```
-
-The [player/](player) folder has a miniature song player interface for embedding
-on other sites. To rebuild just the player code, run:
-
-```
-npm run build-player
-```
-
-The [website/](website) folder contains index.html files to view the interfaces.
-The build process outputs JavaScript files into this folder.
-
-## Dependencies
-
-Most of the dependencies are listed in [package.json](package.json), although
-I'd like to note that MyBox also has an indirect, optional dependency on
-[lamejs](https://www.npmjs.com/package/lamejs) via
-[jsdelivr](https://www.jsdelivr.com/) for exporting .mp3 files. If the user
-attempts to export an .mp3 file, MyBox will direct the browser to download
-that dependency on demand.
+## Contributing
+See **CONTRIBUTE.md**
+[^1]: When you delete the audio file, it corrupts your song data. Use carefully!
+[^2]: Unsure!

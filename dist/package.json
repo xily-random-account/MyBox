@@ -1,16 +1,16 @@
 {
-	"name": "mybox",
+	"name": "My Box Lemons",
 	"version": "4.2.1",
-	"author": "John Nesky",
+	"author": "Alyshia",
 	"homepage": "https://www.mybox.co",
-	"description": "MyBox is an online tool for sketching and sharing instrumental music.",
+	"description": "My Box Lemnons is a literal (yet to be)... a DAW. IN THE BROWSER!!!",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/johnnesky/mybox.git"
+		"url": "git+https://github.com/xily-random-account/mybox.git"
 	},
 	"bugs": {
-		"url": "https://github.com/johnnesky/mybox/issues"
+		"url": "https://github.com/xily-random-account/mybox/issues"
 	},
 	"funding": "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=QZJTX9GRYEV9N&currency_code=USD",
 	"type": "module",
