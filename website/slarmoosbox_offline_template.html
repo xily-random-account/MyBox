@@ -190,6 +190,19 @@
                 Certain themes won't work correctly. Custom samples are not supported. You can still load samples from websites if you're connected to the internet.
             </p>
     </div>
+    <script>
+	if ('serviceWorker' in navigator) {
+		window.addEventListener('load', function() {
+			navigator.serviceWorker.register('/service_worker.js', { scope: '/' })
+			.then(function(registration) {
+				console.log('ServiceWorker registered successfully with scope: ', registration.scope);
+			})
+			.catch(function(err) {
+				console.error('ServiceWorker registration failed: ', err);
+			});
+		});
+	}
+   </script>
 
     <script type="text/javascript">
         // (ignore the comments below)

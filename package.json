@@ -1,18 +1,15 @@
 {
-	"name": "JukeBox",
-	"version": "0.1.4",
-	"description": "Slarmoo's Box is a mod of Ultrabox that aims to advance Beepbox's capabilities.",
-	"author": "Slarmoo",
+	"name": "My Box Lemon (MBL)",
+	"version": "0.1",
+	"description": "MBL is a mod of Jukeebox with is a mod from Slarmoo, and so on which aims to be a DAW in the browser. (GIVE ME TIME!! I'm only one person!)",
+	"author": "Alysh",
 	"contributors": [
-		"Slarmoo",
-		"Main",
-		"Neputendo",
-		"LeoV",
-		"Mid",
-		"Choptop84"
+		"xily-random-account",
+		"xi-self13 (Alysh)"
+
 	],
 	"license": "MIT",
-	"homepage": "https://slarmoo.github.io/slarmoosbox/website/",
+	"homepage": "https://my-box-lemon.vercel.app",
 	"type": "module",
 	"main": "main.js",
 	"icon": "path.join(__dirname, 'icon.ico')",

@@ -1,6 +1,6 @@
 {
-	"name": "Slarmoo's Box",
-	"short_name": "Slarmoo's Box",
+	"name": "My Box Lemon",
+	"short_name": "MBL",
 	"description": "Slarmoo's Box is a mod of Ultrabox that aims to advance Beepbox's capabilities.",
 	"scope": "/",
 	"start_url": ".",

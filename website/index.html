@@ -421,6 +421,19 @@
             <br><br>
         </div>
     </div>
+    <script>
+	if ('serviceWorker' in navigator) {
+		window.addEventListener('load', function() {
+			navigator.serviceWorker.register('/service_worker.js', { scope: '/' })
+			.then(function(registration) {
+				console.log('ServiceWorker registered successfully with scope: ', registration.scope);
+			})
+			.catch(function(err) {
+				console.error('ServiceWorker registration failed: ', err);
+			});
+		});
+	}
+    </script>
 
     <!--
     Instead of loading js beepbox editor interface directly, test for browser support.

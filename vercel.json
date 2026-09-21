@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "public": true,
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/service_worker.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    }
+  ]
+}

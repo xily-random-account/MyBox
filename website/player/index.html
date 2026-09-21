@@ -80,6 +80,20 @@
 			document.body.innerHTML = "Sorry, BeepBox doesn't support your browser. Try a recent version of Chrome, Firefox, Edge, Safari, or Opera.";
 		}
 	</script>
+	<script>
+	if ('serviceWorker' in navigator) {
+		window.addEventListener('load', function() {
+			navigator.serviceWorker.register('/service_worker.js', { scope: '/' })
+			.then(function(registration) {
+				console.log('ServiceWorker registered successfully with scope: ', registration.scope);
+			})
+			.catch(function(err) {
+				console.error('ServiceWorker registration failed: ', err);
+			});
+		});
+	}
+    </script>
+
 </body>
 
 </html>
