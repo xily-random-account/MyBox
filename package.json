@@ -6,7 +6,6 @@
 	"contributors": [
 		"xily-random-account",
 		"xi-self13 (Alysh)"
-
 	],
 	"license": "MIT",
 	"homepage": "https://my-box-lemon.vercel.app",
@@ -45,6 +44,7 @@
 	"dependencies": {
 		"@types/jquery": "^3.5.32",
 		"@types/select2": "^4.0.63",
+		"@vercel/analytics": "^2.0.1",
 		"electron-packager": "^17.1.2",
 		"esbuild": "^0.25.5",
 		"express": "^4.21.2",
