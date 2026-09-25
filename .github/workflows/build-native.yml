@@ -1,0 +1,49 @@
+name: Build MyBox Native
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install NeutralinoJS CLI
+        run: npm install -g @neutralinojs/neu
+
+      - name: Prepare native project
+        run: |
+          # Create Neutralino project if missing
+          if [ ! -d "MyBoxNative" ]; then
+            neu create MyBoxNative
+          fi
+
+          # Copy website into Neutralino resources
+          rm -rf MyBoxNative/resources/*
+          mkdir -p MyBoxNative/resources/website
+          cp -r website/* MyBoxNative/resources/website/
+
+      - name: Build native app
+        run: |
+          cd MyBoxNative
+          neu build --release
+
+      - name: Upload release artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            MyBoxNative/dist/*.exe
+            MyBoxNative/dist/*.app
+            MyBoxNative/dist/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
