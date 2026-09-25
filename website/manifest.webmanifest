@@ -1,10 +1,10 @@
 {
 	"name": "My Box Lemon",
 	"short_name": "MBL",
-	"description": "Slarmoo's Box is a mod of Ultrabox that aims to advance Beepbox's capabilities.",
+	"description": "MBL is a mod of Jukebox, which is a mod of slarmoosbox and a mod of Ultrabox that aims to advance Beepbox's capabilities.",
 	"scope": "/",
 	"start_url": ".",
-	"display": "browser",
+	"display": "standalone",
 	"orientation": "portrait-primary",
 	"theme_color": "#247d1d",
 	"background_color": "#000",

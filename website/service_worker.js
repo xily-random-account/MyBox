@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
 	"/index_debug.html",
 	"/manifest.webmanifest",
 	"/style.css",
+	"/editor.html",
 	
 	// Core Editors and Synths
 	"/mybox_editor.min.js",
