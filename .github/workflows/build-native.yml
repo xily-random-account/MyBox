@@ -28,9 +28,11 @@ jobs:
             neu create MyBoxNative
           fi
 
-          # Copy website into Neutralino resources
-          rm -rf MyBoxNative/resources/*
+          # Ensure website folder exists inside resources
           mkdir -p MyBoxNative/resources/website
+
+          # Copy website files WITHOUT deleting Neutralino runtime
+          rm -rf MyBoxNative/resources/website/*
           cp -r website/* MyBoxNative/resources/website/
 
       - name: Build native app
