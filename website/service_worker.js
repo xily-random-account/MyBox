@@ -1,5 +1,5 @@
 const CACHE_VERSION = "v1.0.0";
-const CACHE_NAME = `Slarmoos-Box-${CACHE_VERSION}`;
+const CACHE_NAME = `MBL-${CACHE_VERSION}`;
 
 // Precise list of files required for full offline application functionality
 const ASSETS_TO_CACHE = [
@@ -72,35 +72,45 @@ self.addEventListener("activate", function(event) {
 	);
 });
 
-// 3. Fetch Stage: Cache-First Strategy with Background Revalidation
 self.addEventListener("fetch", function(event) {
-	if (event.request.method !== "GET") return;
+  if (event.request.method !== "GET") return;
 
-	const url = event.request.url;
+  const url = event.request.url;
 
-	// Dynamic lookup rules for assets we want saved to permanent offline cache structures
-	const isCacheableOrigin = 
-		url.startsWith(self.location.origin) ||
-		url.startsWith("https://googleapis.com") ||
-		url.startsWith("https://gstatic.com") ||
-		url.startsWith("https://jsdelivr.net");
+  const isCacheableOrigin = 
+    url.startsWith(self.location.origin) ||
+    url.startsWith("https://googleapis.com") ||
+    url.startsWith("https://gstatic.com") ||
+    url.startsWith("https://jsdelivr.net");
 
-	if (!isCacheableOrigin) return;
+  if (!isCacheableOrigin) return;
 
-	event.respondWith(
-		caches.match(event.request).then(function(cachedResponse) {
-			// Trigger a silent background request to keep assets completely up-to-date
-			const networkFetch = caches.open(CACHE_NAME).then(function(cache) {
-				return fetch(event.request).then(function(networkResponse) {
-					if (networkResponse.status === 200) {
-						cache.put(event.request, networkResponse.clone());
-					}
-					return networkResponse;
-				}).catch(() => null); // Gracefully absorb network dropouts in the background
-			});
+  event.respondWith(
+    caches.match(event.request).then(function(cachedResponse) {
 
-			// Instantly return the local file copy if it exists, otherwise fall back to network fetch
-			return cachedResponse || networkFetch;
-		})
-	);
+      const networkFetch = caches.open(CACHE_NAME).then(function(cache) {
+        return fetch(event.request)
+          .then(function(networkResponse) {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch(() => null);
+      });
+
+      // SAFARI FIX: ensure a valid Response is ALWAYS returned
+      return cachedResponse || networkFetch.then(response => {
+        if (response) return response;
+
+        // HTML fallback
+        if (event.request.headers.get("accept")?.includes("text/html")) {
+          return caches.match("/index.html") || caches.match("/offline.html");
+        }
+
+        // Non-HTML fallback
+        return new Response("", { status: 200 });
+      });
+    })
+  );
 });
