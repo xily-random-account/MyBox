@@ -10,15 +10,15 @@ const ASSETS_TO_CACHE = [
 	"/style.css",
 	"/editor.html",
 	
-	// Core Editors and Synths
-	"/mybox_editor.min.js",
-	"/mybox_synth.min.js",
+	// fix naming... so default for now
+	"/beepbox_editor.min.js",
+	"/beepbox_synth.min.js",
 	"/foolish_editor.min.js",
 	
 	// Player Assets
 	"/player/",
 	"/player/index.html",
-	"/player/mybox_player.min.js",
+	"/player/beepbox_player.min.js",
 	"/player/foolish_player.min.js",
 	
 	// Legacy / Alternate Versions
