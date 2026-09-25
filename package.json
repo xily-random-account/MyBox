@@ -45,6 +45,7 @@
 		"@types/jquery": "^3.5.32",
 		"@types/select2": "^4.0.63",
 		"@vercel/analytics": "^2.0.1",
+		"@vercel/speed-insights": "^2.0.0",
 		"electron-packager": "^17.1.2",
 		"esbuild": "^0.25.5",
 		"express": "^4.21.2",
