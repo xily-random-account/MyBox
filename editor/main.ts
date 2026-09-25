@@ -9,6 +9,9 @@ import { NotePin, Note, Pattern, Instrument, Channel, Song, Synth } from "../syn
 import { SongDocument } from "./SongDocument";
 import { ExportPrompt } from "./ExportPrompt";
 import { ChangePreset } from "./changes";
+import { inject } from "@vercel/analytics"
+
+inject()
 
 
 //namespace beepbox {
