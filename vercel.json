@@ -1,7 +1,10 @@
 {
   "version": 2,
-  "public": true,
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/service_worker.js", "destination": "/website/service_worker.js" },
+    { "source": "/(.*)", "destination": "/website/$1" }
+  ],
   "headers": [
     {
       "source": "/service_worker.js",
@@ -18,3 +21,4 @@
     }
   ]
 }
+
